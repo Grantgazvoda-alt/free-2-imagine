@@ -2,6 +2,8 @@ import type { ComponentProps, CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SubmitInputFor } from "@higgsfield/fnf/client";
+import type { Generation } from "@higgsfield/fnf/client";
+import { getPreviewUrl } from "@higgsfield/fnf/client";
 import {
   costQueryOptions,
   flattenFeedPages,
@@ -20,7 +22,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -28,6 +30,8 @@ import { Loader } from "@higgsfield/quanta/loader";
 import { Sidebar } from "@higgsfield/quanta/sidebar";
 import { Tabs } from "@higgsfield/quanta/tabs";
 import { Typography } from "@higgsfield/quanta/typography";
+import { Modal } from "@higgsfield/quanta/modal";
+import { Media } from "@higgsfield/quanta/media";
 import type {
   AssetLibraryItem,
   AssetLibraryPagination,
@@ -116,6 +120,13 @@ const STYLES = [
   { value: "fantasy", title: "Fantasy" },
 ];
 
+const VARIATIONS = [
+  { value: "1", title: "1", subtitle: "Single" },
+  { value: "2", title: "2", subtitle: "Two" },
+  { value: "3", title: "3", subtitle: "Three" },
+  { value: "4", title: "4", subtitle: "Four" },
+];
+
 const PROMPT_MODES: PromptModeOption[] = [];
 
 const PROMPT_SETTINGS: PromptSettingOption[] = [
@@ -130,6 +141,12 @@ const PROMPT_SETTINGS: PromptSettingOption[] = [
     start: <Icon as={IconStyle} size="sm" />,
     defaultValue: "natural",
     options: STYLES,
+  },
+  {
+    id: "variations",
+    start: <Icon as={IconLayers} size="sm" />,
+    defaultValue: "1",
+    options: VARIATIONS,
   },
 ];
 
@@ -563,14 +580,17 @@ export function StudioTemplate() {
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState("product");
   const [settingValues, setSettingValues] = useState<Record<string, string>>({
-    format: "ugc",
-    hook: "hook",
+    aspectRatio: "1:1",
+    style: "natural",
+    variations: "1",
   });
   const [references, setReferences] = useState<Record<string, AssetSelection | undefined>>({});
   const [localUploads, setLocalUploads] = useState<AssetLibraryItem[]>([]);
   const [linkOverrides, setLinkOverrides] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pendingSignInUrl, setPendingSignInUrl] = useState<string | null>(null);
+  const [pickBestOpen, setPickBestOpen] = useState(false);
+  const [pickBestBatch, setPickBestBatch] = useState<Generation[]>([]);
   const prependedIds = useRef(new Set<string>());
   const linkingIds = useRef(new Set<string>());
   const runProjectId = useRef<string | undefined>(undefined);
@@ -746,10 +766,10 @@ export function StudioTemplate() {
         aspectRatio: aspectRatio ?? "1:1",
         quality: "high" as const,
         resolution: "2k" as const,
-        batchSize: 1,
+        batchSize: parseInt(settingValues.variations ?? "1", 10),
       },
     };
-  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style]);
+  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style, settingValues.variations]);
 
   const hasReference = Object.values(references).some((selection) => selection?.ref != null);
   const canGenerate = prompt.trim().length > 0 || hasReference;
@@ -811,6 +831,17 @@ export function StudioTemplate() {
     navigateToAllOnSubmitRef.current = false;
     setView({ kind: "all" });
   }, [run.generations.length]);
+
+  useEffect(() => {
+    if (pickBestBatch.length <= 1) return;
+    const allTerminal = pickBestBatch.every((gen) => {
+      const live = run.generations.find((g) => g.id === gen.id);
+      return live && (live.status === "completed" || live.status === "failed");
+    });
+    if (allTerminal && !pickBestOpen) {
+      setPickBestOpen(true);
+    }
+  }, [pickBestBatch, pickBestOpen, run.generations]);
 
   const handleUpload = async (file: File): Promise<AssetSelection> => {
     const uploaded = await uploadAsset(file);
@@ -874,8 +905,12 @@ export function StudioTemplate() {
     // The host approval iframe owns confirmation. Do not navigate away from
     // Home until the approved submit has actually created a generation.
     navigateToAllOnSubmitRef.current = runProjectId.current == null;
+    const variations = parseInt(settingValues.variations ?? "1", 10);
     void run.start(input).then((generations) => {
       if (generations.length === 0) navigateToAllOnSubmitRef.current = false;
+      if (variations > 1 && generations.length > 1) {
+        setPickBestBatch(generations);
+      }
     });
   };
 
@@ -936,6 +971,61 @@ export function StudioTemplate() {
           if (!open) setPendingSignInUrl(null);
         }}
       />
+      <Modal.Root open={pickBestOpen} onOpenChange={(open) => {
+        if (!open) setPickBestOpen(false);
+      }}>
+        <Modal.Content size="xl">
+          <Modal.Header>
+            <Modal.Title>Pick the best result</Modal.Title>
+            <Modal.CloseButton />
+          </Modal.Header>
+          <div className="grid grid-cols-2 gap-4 p-4">
+            {pickBestBatch.map((generation) => {
+              const live = run.generations.find((g) => g.id === generation.id);
+              const previewUrl = live ? getPreviewUrl(live) : null;
+              const failed = live?.status === "failed";
+              return (
+                <div
+                  key={generation.id}
+                  className="group relative flex flex-col gap-3 rounded-q-600 bg-q-background-secondary p-2"
+                >
+                  <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-q-400 bg-q-background-tertiary">
+                    {failed ? (
+                      <Typography as="p" variant="body-sm-regular" color="danger" className="p-4 text-center">
+                        Generation failed
+                      </Typography>
+                    ) : previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt=""
+                        className="block h-full w-full object-contain"
+                      />
+                    ) : (
+                      <Loader size="md" color="neutral" aria-label="Loading" />
+                    )}
+                  </div>
+                  <Button
+                    variant="marketingPrimary"
+                    size="md"
+                    disabled={!previewUrl || failed}
+                    onClick={() => {
+                      setPickBestOpen(false);
+                      setPickBestBatch([]);
+                    }}
+                  >
+                    {failed ? "Failed" : previewUrl ? "Keep this" : "Generating..."}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          <Modal.Footer>
+            <Modal.FooterCaption>
+              All results are saved to your feed — pick the one you like best
+            </Modal.FooterCaption>
+          </Modal.Footer>
+        </Modal.Content>
+      </Modal.Root>
       <StudioSidebar
         view={view}
         onViewChange={handleViewChange}
