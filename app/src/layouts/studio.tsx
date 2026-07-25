@@ -23,7 +23,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -125,32 +125,70 @@ const VARIATIONS = [
   { value: "4", title: "4", subtitle: "Four" },
 ];
 
-const PROMPT_MODES: PromptModeOption[] = [];
+const AVATAR_STYLES = [
+  { value: "professional", title: "Professional", subtitle: "Corporate headshot" },
+  { value: "fantasy", title: "Fantasy", subtitle: "Mythical character" },
+  { value: "cartoon", title: "Cartoon", subtitle: "Animated style" },
+  { value: "cyberpunk", title: "Cyberpunk", subtitle: "Futuristic neon" },
+  { value: "anime", title: "Anime", subtitle: "Japanese animation" },
+  { value: "realistic", title: "Realistic", subtitle: "Photorealistic" },
+  { value: "pixel", title: "Pixel Art", subtitle: "Retro game style" },
+  { value: "noir", title: "Noir", subtitle: "Film noir" },
+];
 
-const PROMPT_SETTINGS: PromptSettingOption[] = [
-  {
-    id: "aspectRatio",
-    start: <Icon as={IconAspectRatio} size="sm" />,
-    defaultValue: "1:1",
-    options: ASPECT_RATIOS,
-  },
-  {
-    id: "style",
-    start: <Icon as={IconStyle} size="sm" />,
-    defaultValue: "natural",
-    options: STYLES,
-  },
-  {
-    id: "variations",
-    start: <Icon as={IconLayers} size="sm" />,
-    defaultValue: "1",
-    options: VARIATIONS,
-  },
+const PROMPT_MODES: PromptModeOption[] = [
+  { id: "freeform", label: "Freeform", icon: IconExploreOutlined },
+  { id: "avatar", label: "Avatar", icon: IconAvatar },
 ];
 
 const PROMPT_UPLOADS: Array<Pick<PromptUploadOption, "id" | "label">> = [
   { id: "reference", label: "Reference" },
 ];
+
+function getSettings(mode: string): PromptSettingOption[] {
+  const base = [
+    {
+      id: "aspectRatio",
+      start: <Icon as={IconAspectRatio} size="sm" />,
+      defaultValue: "1:1",
+      options: ASPECT_RATIOS,
+    },
+  ];
+
+  if (mode === "avatar") {
+    return [
+      ...base,
+      {
+        id: "avatarStyle",
+        start: <Icon as={IconStyle} size="sm" />,
+        defaultValue: "professional",
+        options: AVATAR_STYLES,
+      },
+      {
+        id: "variations",
+        start: <Icon as={IconLayers} size="sm" />,
+        defaultValue: "1",
+        options: VARIATIONS,
+      },
+    ];
+  }
+
+  return [
+    ...base,
+    {
+      id: "style",
+      start: <Icon as={IconStyle} size="sm" />,
+      defaultValue: "natural",
+      options: STYLES,
+    },
+    {
+      id: "variations",
+      start: <Icon as={IconLayers} size="sm" />,
+      defaultValue: "1",
+      options: VARIATIONS,
+    },
+  ];
+}
 
 const GALLERY_TABS = [
   { value: "explore", label: "Explore", start: <Icon size="sm" as={IconExploreOutlined} /> },
@@ -582,10 +620,11 @@ export function StudioTemplate() {
   const run = useGenerationRun(jobClient, { scopeKey });
   const [view, setView] = useState<StudioView>({ kind: "home" });
   const [prompt, setPrompt] = useState("");
-  const [mode, setMode] = useState("product");
+  const [mode, setMode] = useState("freeform");
   const [settingValues, setSettingValues] = useState<Record<string, string>>({
     aspectRatio: "1:1",
     style: "natural",
+    avatarStyle: "professional",
     variations: "1",
   });
   const [references, setReferences] = useState<Record<string, AssetSelection | undefined>>({});
@@ -744,17 +783,42 @@ export function StudioTemplate() {
 
   const input = useMemo<StudioGenerationInput>(() => {
     const aspectRatio = (settingValues.aspectRatio ?? "1:1") as "1:1" | "16:9" | "4:3" | "3:4" | "9:16" | "2:3" | "3:2" | "21:9" | "auto" | undefined;
-    const style = settingValues.style ?? "natural";
+    const style = mode === "avatar" ? settingValues.avatarStyle ?? "professional" : settingValues.style ?? "natural";
     const selections = Object.values(references).flatMap((selection) =>
       selection?.ref ? [{ kind: selection.kind, ref: selection.ref }] : [],
     );
     const images = selections.map(({ ref }) => ref);
-    const instruction = [
-      style !== "natural" ? `Style: ${style}.` : "",
-      prompt.trim(),
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+
+    let instruction: string;
+    if (mode === "avatar") {
+      const styleNames: Record<string, string> = {
+        professional: "professional corporate headshot",
+        fantasy: "epic fantasy character portrait",
+        cartoon: "colorful cartoon character",
+        cyberpunk: "cyberpunk futuristic character",
+        anime: "anime-style character portrait",
+        realistic: "photorealistic portrait",
+        pixel: "pixel art retro game character",
+        noir: "film noir dramatic portrait",
+      };
+      const styleDesc = styleNames[style] ?? style;
+      const basePrompt = prompt.trim() || "a person";
+      instruction = [
+        `Create a ${styleDesc} based on the reference photo.`,
+        `Style: ${styleDesc}.`,
+        basePrompt,
+        "Keep the facial features and identity of the reference person. Apply the style to the background, clothing, and overall aesthetic.",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+    } else {
+      instruction = [
+        style !== "natural" ? `Style: ${style}.` : "",
+        prompt.trim(),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+    }
 
     return {
       model: "gpt_image_2",
@@ -773,7 +837,7 @@ export function StudioTemplate() {
         batchSize: parseInt(settingValues.variations ?? "1", 10),
       },
     };
-  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style, settingValues.variations]);
+  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style, settingValues.avatarStyle, settingValues.variations]);
 
   const hasReference = Object.values(references).some((selection) => selection?.ref != null);
   const canGenerate = prompt.trim().length > 0 || hasReference;
@@ -878,7 +942,6 @@ export function StudioTemplate() {
 
   const handleUseTemplate = (template: TemplateItem) => {
     setPrompt(`${template.title} — ${template.subtitle}`);
-    setSettingValues((current) => ({ ...current, format: template.category }));
     trackFeatureUse("use_template", { template: template.id });
   };
 
@@ -920,6 +983,7 @@ export function StudioTemplate() {
     });
   };
 
+  const promptSettings = useMemo(() => getSettings(mode), [mode]);
   const promptUploads = PROMPT_UPLOADS.map((upload) => ({
     ...upload,
     selection: references[upload.id],
@@ -928,7 +992,7 @@ export function StudioTemplate() {
     modes: PROMPT_MODES,
     mode,
     onModeChange: setMode,
-    settings: PROMPT_SETTINGS,
+    settings: promptSettings,
     settingValues,
     onSettingChange: (id, value) => setSettingValues((current) => ({ ...current, [id]: value })),
     uploads: promptUploads,
