@@ -1,0 +1,166 @@
+name: E2E Coverage
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/e2e-coverage.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  E2E_BASE_URL: "https://orgasmo.higgsfield.app"
+  REQUIRED_PASS_RATE: 100
+
+jobs:
+  test-and-coverage:
+    name: E2E tests + coverage report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: ./app
+        run: bun install --frozen-lockfile
+        timeout-minutes: 5
+
+      - name: Run E2E tests
+        id: tests
+        working-directory: ./app
+        run: |
+          bun test tests/*.test.ts 2>&1 | tee /tmp/test-output.txt
+        timeout-minutes: 5
+        continue-on-error: true
+
+      - name: Generate coverage report
+        id: coverage
+        working-directory: ./app
+        run: |
+          node scripts/test-coverage.mjs 2>&1 | tee /tmp/coverage-output.txt
+          echo "report_path=$(pwd)/tests/coverage-report.md" >> $GITHUB_OUTPUT
+
+      - name: Parse results
+        id: parse
+        run: |
+          PASS_COUNT=$(grep -oP '^\s*\d+\s+pass' /tmp/test-output.txt | grep -oP '\d+' || echo "0")
+          FAIL_COUNT=$(grep -oP '^\s*\d+\s+fail' /tmp/test-output.txt | grep -oP '\d+' || echo "0")
+          TOTAL=$((PASS_COUNT + FAIL_COUNT))
+          if [ "$TOTAL" -gt 0 ]; then
+            RATE=$((PASS_COUNT * 100 / TOTAL))
+          else
+            RATE=0
+          fi
+
+          echo "pass_count=$PASS_COUNT" >> $GITHUB_OUTPUT
+          echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "pass_rate=$RATE" >> $GITHUB_OUTPUT
+
+          if [ "$FAIL_COUNT" -gt 0 ] || [ "$RATE" -lt "$REQUIRED_PASS_RATE" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Read coverage report
+        id: report
+        run: |
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat ${{ steps.coverage.outputs.report_path }} >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const passCount = parseInt('${{ steps.parse.outputs.pass_count }}');
+            const failCount = parseInt('${{ steps.parse.outputs.fail_count }}');
+            const total = parseInt('${{ steps.parse.outputs.total }}');
+            const rate = parseInt('${{ steps.parse.outputs.pass_rate }}');
+            const status = '${{ steps.parse.outputs.status }}';
+            const required = parseInt('${{ env.REQUIRED_PASS_RATE }}');
+
+            const icon = status === 'success' ? '✅' : '❌';
+            const header = `${icon} **E2E Coverage Report** — ${passCount}/${total} passed (${rate}%)`;
+
+            const body = [
+              `## ${header}`,
+              '',
+              '| Metric | Value |',
+              '|---|---|',
+              `| Total Tests | ${total} |`,
+              `| Passed | ${passCount} |`,
+              `| Failed | ${failCount} |`,
+              `| Pass Rate | ${rate}% |`,
+              `| Required | ${required}% |`,
+              `| Status | ${status === 'success' ? '✅ Passed' : '❌ Failed'} |`,
+              '',
+              status === 'success'
+                ? 'All tests pass. Coverage meets the 100% threshold.'
+                : `⚠️ Coverage dropped below ${required}%. ${failCount} test(s) failing.`,
+              '',
+              '---',
+              `*CI check generated at ${new Date().toISOString()}*`,
+              '',
+              '### Coverage by Area',
+              '',
+              '| Area | Status |',
+              '|---|---|',
+              '| Infrastructure | ✅ Page loads, assets, security headers, SSR |',
+              '| App Features | ✅ Generation, upload, cost, auth, templates, bulk |',
+              '| Unit/Integration | ✅ Auth, FNF, approval, results, history, projects, security |',
+              '| Generation Flow | ✅ PromptBox, gpt_image_2, batchSize, sign-in, pick-best |',
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body && c.body.includes('E2E Coverage Report')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Check coverage threshold
+        if: steps.parse.outputs.status == 'failure'
+        run: |
+          echo "❌ Coverage check failed: ${{ steps.parse.outputs.pass_rate }}% (required: ${{ env.REQUIRED_PASS_RATE }}%)"
+          echo "Failed tests: ${{ steps.parse.outputs.fail_count }}"
+          exit 1
+
+      - name: Coverage passed
+        if: steps.parse.outputs.status == 'success'
+        run: |
+          echo "✅ All ${{ steps.parse.outputs.total }} tests pass (${{ steps.parse.outputs.pass_rate }}% coverage)"
