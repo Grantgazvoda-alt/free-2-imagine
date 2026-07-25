@@ -31,7 +31,6 @@ import { Sidebar } from "@higgsfield/quanta/sidebar";
 import { Tabs } from "@higgsfield/quanta/tabs";
 import { Typography } from "@higgsfield/quanta/typography";
 import { Modal } from "@higgsfield/quanta/modal";
-import { Media } from "@higgsfield/quanta/media";
 import type {
   AssetLibraryItem,
   AssetLibraryPagination,
