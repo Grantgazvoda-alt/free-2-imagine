@@ -63,7 +63,7 @@ function AnalyticsDashboard() {
     );
   }
 
-  if (error || data?.ok === false) {
+  if (error || !data || data?.ok === false) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-q-background-primary px-4">
         <Typography as="h1" variant="title-md-semi-bold" color="danger">
@@ -79,7 +79,16 @@ function AnalyticsDashboard() {
     );
   }
 
-  const summary = data.summary;
+  const summary = data?.summary;
+  if (!summary) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-q-background-primary p-6">
+        <Typography as="p" variant="body-sm-regular" color="secondary">
+          No analytics data available.
+        </Typography>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-q-background-primary p-6">
