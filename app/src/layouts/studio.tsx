@@ -394,6 +394,8 @@ function BeforeState({
   onUseTemplate,
   onOpenProjects,
   projectError,
+  mode,
+  onBrowseStyles,
 }: {
   projects: StudioProject[];
   generations: GalleryItem[];
@@ -404,6 +406,8 @@ function BeforeState({
   onUseTemplate: (template: TemplateItem) => void;
   onOpenProjects: () => boolean;
   projectError?: string;
+  mode: string;
+  onBrowseStyles?: () => void;
 }) {
   const [galleryTab, setGalleryTab] = useState("explore");
   const promptRef = useRef<HTMLDivElement>(null);
@@ -459,10 +463,10 @@ function BeforeState({
           {mode === "avatar" && (
             <button
               type="button"
-              onClick={() => setStylePickerOpen(true)}
+              onClick={() => onBrowseStyles?.()}
               className="flex items-center gap-1.5 rounded-q-300 bg-q-transparent-light-05 px-3 py-1.5 text-q-caption-sm-medium text-q-text-secondary transition-colors hover:bg-q-transparent-light-10 hover:text-q-text-primary"
             >
-              <Icon as={Grid3X3} size="sm" />
+              <Icon as={IconGrid} size="sm" />
               Browse Styles
             </button>
           )}
@@ -1186,6 +1190,8 @@ export function StudioTemplate() {
             projectError={
               projectData.error instanceof Error ? projectData.error.message : undefined
             }
+            mode={mode}
+            onBrowseStyles={() => setStylePickerOpen(true)}
           />
         ) : (
           <GenerationsState
