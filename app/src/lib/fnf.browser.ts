@@ -1,7 +1,7 @@
 import { createProfileClient, type FnfAdapter } from "@higgsfield/fnf";
 import type { MediaRef } from "@higgsfield/fnf/media";
 import { errorFromJSON } from "@higgsfield/fnf/errors";
-import { seedance2_0 } from "@higgsfield/fnf/jobs";
+import { gptImage2 } from "@higgsfield/fnf/jobs";
 import type { AssetSelection } from "@/components/asset-library";
 import {
   cancelJobFn,
@@ -21,7 +21,7 @@ import {
 import type { FnfRpcResult } from "./fnf.functions";
 import { requestGenerationApproval } from "./generation-approval";
 
-export const STUDIO_JOBS = [seedance2_0] as const;
+export const STUDIO_JOBS = [gptImage2] as const;
 
 async function unwrap(result: FnfRpcResult): Promise<unknown> {
   if (!result.ok) throw errorFromJSON(result.error);

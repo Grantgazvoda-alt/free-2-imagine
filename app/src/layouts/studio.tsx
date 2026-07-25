@@ -13,8 +13,6 @@ import {
   useGenerationRun,
   useLiveFeedGenerations,
 } from "@higgsfield/fnf-react";
-import { Box as Icon3dBoxTopOutlined } from "lucide-react";
-import { PaintBucket as IconBucketOutlined } from "lucide-react";
 import { Compass as IconExploreOutlined } from "lucide-react";
 import { Folder as IconProjectsOutlined } from "lucide-react";
 import { Plus as IconPlusMediumOutlined } from "lucide-react";
@@ -22,7 +20,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Globe as IconWorldOutlined } from "lucide-react";
+import { AspectRatio as IconAspectRatio, Paintbrush as IconStyle } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -90,8 +88,7 @@ type StudioProject = MyProjectsProject;
 type StudioDockProps = Omit<ComponentProps<typeof StudioPromptBox>, "className" | "surface">;
 type StudioView = { kind: "home" } | { kind: "all" } | { kind: "project"; projectId: string };
 
-const HISTORY_QUERY = { type: "video" as const, size: 40 };
-const IMAGE_LIBRARY_QUERY = { type: "image" as const, size: 40 };
+const HISTORY_QUERY = { type: "image" as const, size: 40 };
 
 // PLACEHOLDER ASSETS — replace these hero/example assets when adapting the
 // scaffold. The root AGENTS.md and `bun run check:adapted` make this mandatory.
@@ -101,43 +98,43 @@ const HERO_FALLBACKS = [
   "/presets/skateboard-illustration.png",
 ] as const;
 
-const FORMATS = [
-  { value: "ugc", title: "UGC", subtitle: "Creator-style, handheld" },
-  { value: "tiktok", title: "TikTok", subtitle: "Fast-cut vertical" },
-  { value: "reels", title: "Reels", subtitle: "Instagram vertical" },
-  { value: "commercial", title: "Commercial", subtitle: "Polished brand film" },
+const ASPECT_RATIOS = [
+  { value: "1:1", title: "Square", subtitle: "1:1" },
+  { value: "3:4", title: "Portrait", subtitle: "3:4" },
+  { value: "4:3", title: "Landscape", subtitle: "4:3" },
+  { value: "16:9", title: "Wide", subtitle: "16:9" },
+  { value: "9:16", title: "Story", subtitle: "9:16" },
 ];
 
-const HOOKS = [
-  { value: "hook", title: "Hook" },
-  { value: "story", title: "Story" },
-  { value: "demo", title: "Product demo" },
-  { value: "testimonial", title: "Testimonial" },
+const STYLES = [
+  { value: "natural", title: "Natural" },
+  { value: "vivid", title: "Vivid" },
+  { value: "cinematic", title: "Cinematic" },
+  { value: "anime", title: "Anime" },
+  { value: "illustration", title: "Illustration" },
+  { value: "noir", title: "Noir" },
+  { value: "fantasy", title: "Fantasy" },
 ];
 
-const PROMPT_MODES: PromptModeOption[] = [
-  { id: "product", label: "Product", icon: Icon3dBoxTopOutlined },
-  { id: "app", label: "App", icon: IconWorldOutlined },
-];
+const PROMPT_MODES: PromptModeOption[] = [];
 
 const PROMPT_SETTINGS: PromptSettingOption[] = [
   {
-    id: "format",
-    start: <Icon as={IconBucketOutlined} size="sm" />,
-    defaultValue: "ugc",
-    options: FORMATS,
+    id: "aspectRatio",
+    start: <Icon as={IconAspectRatio} size="sm" />,
+    defaultValue: "1:1",
+    options: ASPECT_RATIOS,
   },
   {
-    id: "hook",
-    start: <Icon as={IconBucketOutlined} size="sm" />,
-    defaultValue: "hook",
-    options: HOOKS,
+    id: "style",
+    start: <Icon as={IconStyle} size="sm" />,
+    defaultValue: "natural",
+    options: STYLES,
   },
 ];
 
 const PROMPT_UPLOADS: Array<Pick<PromptUploadOption, "id" | "label">> = [
-  { id: "product", label: "Product" },
-  { id: "avatar", label: "Avatar" },
+  { id: "reference", label: "Reference" },
 ];
 
 const GALLERY_TABS = [
@@ -392,7 +389,7 @@ function BeforeState({
               color="primary"
               className="max-w-[640px] text-center uppercase"
             >
-              Turn any product into a video ad
+              Generate any image, no rules
             </Typography>
           </div>
           <StudioPromptBox {...dock} />
@@ -588,14 +585,9 @@ export function StudioTemplate() {
     getNextPageParam: getNextStudioCursor,
     select: flattenFeedPages,
   });
-  const imageHistory = useInfiniteQuery({
-    ...jobsFeedQueryOptions(jobClient, IMAGE_LIBRARY_QUERY, { scopeKey }),
-    getNextPageParam: getNextStudioCursor,
-    select: flattenFeedPages,
-  });
   const liveGenerations = useMemo(
-    () => [...(history.data ?? []), ...(imageHistory.data ?? [])],
-    [history.data, imageHistory.data],
+    () => [...(history.data ?? [])],
+    [history.data],
   );
   useLiveFeedGenerations(jobClient, liveGenerations, { scopeKey });
   const persistedUploads = useInfiniteQuery({
@@ -665,12 +657,8 @@ export function StudioTemplate() {
     [galleryItems, projectItems, view],
   );
   const libraryGenerations = useMemo(() => {
-    const generationIds = new Set(generations.map((generation) => generation.id));
-    return [
-      ...generations,
-      ...(imageHistory.data ?? []).filter((generation) => !generationIds.has(generation.id)),
-    ];
-  }, [generations, imageHistory.data]);
+    return generations;
+  }, [generations]);
 
   const libraryItems = useMemo(() => {
     const localIds = new Set(localUploads.map((item) => item.ref?.id));
@@ -690,14 +678,10 @@ export function StudioTemplate() {
     (persistedUploads.error != null && !persistedUploads.isFetchNextPageError)
       ? persistedUploads.refetch
       : persistedUploads.fetchNextPage;
-  const loadMoreLibraryVideos =
+  const loadMoreLibraryHistory =
     history.data == null || (history.error != null && !history.isFetchNextPageError)
       ? history.refetch
       : history.fetchNextPage;
-  const loadMoreLibraryImages =
-    imageHistory.data == null || (imageHistory.error != null && !imageHistory.isFetchNextPageError)
-      ? imageHistory.refetch
-      : imageHistory.fetchNextPage;
 
   const libraryPagination = useMemo<AssetLibraryPagination>(
     () => ({
@@ -710,16 +694,15 @@ export function StudioTemplate() {
         onLoadMore: loadMoreUploads,
       },
       image: {
-        hasMore: imageHistory.hasNextPage === true,
-        loading: imageHistory.isPending || imageHistory.isFetchingNextPage,
-        ...(imageHistory.error instanceof Error ? { error: imageHistory.error.message } : {}),
-        onLoadMore: loadMoreLibraryImages,
-      },
-      video: {
         hasMore: history.hasNextPage === true,
         loading: history.isPending || history.isFetchingNextPage,
         ...(history.error instanceof Error ? { error: history.error.message } : {}),
-        onLoadMore: loadMoreLibraryVideos,
+        onLoadMore: loadMoreLibraryHistory,
+      },
+      video: {
+        hasMore: false,
+        loading: false,
+        onLoadMore: async () => {},
       },
     }),
     [
@@ -727,13 +710,7 @@ export function StudioTemplate() {
       history.hasNextPage,
       history.isFetchingNextPage,
       history.isPending,
-      imageHistory.error,
-      imageHistory.hasNextPage,
-      imageHistory.isFetchingNextPage,
-      imageHistory.isPending,
-      loadMoreLibraryImages,
-      loadMoreLibraryVideos,
-      loadMoreUploads,
+      loadMoreLibraryHistory,
       persistedUploads.error,
       persistedUploads.hasNextPage,
       persistedUploads.isFetchingNextPage,
@@ -742,44 +719,37 @@ export function StudioTemplate() {
   );
 
   const input = useMemo<StudioGenerationInput>(() => {
-    const format = settingValues.format ?? "ugc";
-    const hook = settingValues.hook ?? "hook";
+    const aspectRatio = settingValues.aspectRatio ?? "1:1";
+    const style = settingValues.style ?? "natural";
     const selections = Object.values(references).flatMap((selection) =>
       selection?.ref ? [{ kind: selection.kind, ref: selection.ref }] : [],
     );
-    const images = selections.filter(({ kind }) => kind !== "video").map(({ ref }) => ref);
-    const videos = selections.filter(({ kind }) => kind === "video").map(({ ref }) => ref);
-    const formatLabel = FORMATS.find((candidate) => candidate.value === format)?.title ?? format;
-    const hookLabel = HOOKS.find((candidate) => candidate.value === hook)?.title ?? hook;
+    const images = selections.map(({ ref }) => ref);
     const instruction = [
-      `Create a ${formatLabel} ${mode} video with a ${hookLabel} structure.`,
+      style !== "natural" ? `Style: ${style}.` : "",
       prompt.trim(),
     ]
       .filter(Boolean)
       .join("\n\n");
 
     return {
-      model: "seedance_2_0",
+      model: "gpt_image_2",
       prompt: { instruction },
-      ...(images.length > 0 || videos.length > 0
+      ...(images.length > 0
         ? {
             media: {
-              ...(images.length > 0 ? { image: images } : {}),
-              ...(videos.length > 0 ? { video: videos } : {}),
+              image: images,
             },
           }
         : {}),
       settings: {
-        duration: 8,
-        aspectRatio: format === "commercial" ? "16:9" : "9:16",
-        resolution: "720p",
-        mode: "std",
+        aspectRatio,
+        quality: "high",
+        resolution: "2k",
         batchSize: 1,
-        generateAudio: true,
-        bitrateMode: "standard",
       },
     };
-  }, [mode, prompt, references, settingValues.format, settingValues.hook]);
+  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style]);
 
   const hasReference = Object.values(references).some((selection) => selection?.ref != null);
   const canGenerate = prompt.trim().length > 0 || hasReference;
@@ -1000,7 +970,7 @@ export function StudioTemplate() {
             error={history.error instanceof Error ? history.error.message : undefined}
             hasMore={history.error == null && history.hasNextPage === true}
             loadingMore={history.isFetchingNextPage}
-            onLoadMore={loadMoreLibraryVideos}
+            onLoadMore={loadMoreLibraryHistory}
             manualLoadMore={view.kind === "project"}
             dock={dock}
           />
