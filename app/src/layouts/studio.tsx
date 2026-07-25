@@ -94,13 +94,11 @@ type StudioView = { kind: "home" } | { kind: "all" } | { kind: "project"; projec
 
 const HISTORY_QUERY = { type: "image" as const, size: 40 };
 
-// PLACEHOLDER ASSETS — replace these hero/example assets when adapting the
-// scaffold. The root AGENTS.md and `bun run check:adapted` make this mandatory.
-const HERO_FALLBACKS = [
-  "/presets/skateboard-illustration.png",
-  "/presets/chess-illustration.png",
-  "/presets/skateboard-illustration.png",
-] as const;
+// PLACEHOLDER ASSETS — replace these with generated hero images when credits
+// are available. These are placeholder gradients — not broken image paths.
+const HERO_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23181825'/%3E%3Ccircle cx='200' cy='150' r='32' fill='none' stroke='%23333' stroke-width='1.5'/%3E%3Cpath d='M188 150h24M200 138v24' stroke='%23333' stroke-width='1.5'/%3E%3Ctext x='200' y='210' text-anchor='middle' fill='%23555' font-size='12' font-family='sans-serif'%3EOrgasmo%3C/text%3E%3C/svg%3E";
+const HERO_FALLBACKS = [HERO_PLACEHOLDER, HERO_PLACEHOLDER, HERO_PLACEHOLDER] as const;
 
 const ASPECT_RATIOS = [
   { value: "1:1" as const, title: "Square", subtitle: "1:1" },
@@ -543,8 +541,8 @@ function GenerationsState({
               emptyState={{
                 images: emptyStateImages,
                 title:
-                  title === "All Generations" ? "No generations yet" : `No generations in ${title}`,
-                description: "Describe an idea below, then generate the first result.",
+                  title === "All Generations" ? "No images yet" : `No images in ${title}`,
+                description: "Write a prompt above and tap Generate to create your first image.",
               }}
               hasMore={hasMore && !manualLoadMore}
               loadingMore={loadingMore}

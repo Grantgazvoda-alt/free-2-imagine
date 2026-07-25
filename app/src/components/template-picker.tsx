@@ -40,11 +40,13 @@ import { Typography } from "@higgsfield/quanta/typography";
 // Pure style-picker label thumbnails may keep simple placeholder art when
 // real output depends on the user's own upload. Grep "PLACEHOLDER ASSETS"
 // to find every site.
+const THUMB_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23181825'/%3E%3Ccircle cx='200' cy='150' r='24' fill='none' stroke='%23333' stroke-width='1.5'/%3E%3C/svg%3E";
 const THUMBS = [
-  "/presets/chess-illustration.png",
-  "/presets/skateboard-illustration.png",
-  "/presets/chess-illustration.png",
-  "/presets/skateboard-illustration.png",
+  THUMB_PLACEHOLDER,
+  THUMB_PLACEHOLDER,
+  THUMB_PLACEHOLDER,
+  THUMB_PLACEHOLDER,
 ] as const;
 
 type LeadGlyph = typeof IconBatteryFullFilled;
