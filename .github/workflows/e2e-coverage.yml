@@ -1,6 +1,11 @@
 name: E2E Coverage
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/e2e-coverage.yml"
   pull_request:
     branches: [main]
     paths:
@@ -76,6 +81,85 @@ jobs:
             echo "status=success" >> $GITHUB_OUTPUT
           fi
 
+      - name: Generate coverage badge
+        id: badge
+        run: |
+          RATE=${{ steps.parse.outputs.pass_rate }}
+          STATUS=${{ steps.parse.outputs.status }}
+
+          if [ "$STATUS" = "success" ]; then
+            COLOR="brightgreen"
+            LABEL="passing"
+          elif [ "$RATE" -gt 0 ]; then
+            COLOR="yellow"
+            LABEL="${RATE}%25"
+          else
+            COLOR="red"
+            LABEL="failing"
+          fi
+
+          mkdir -p /tmp/badge
+
+          # Generate SVG badge
+          cat > /tmp/badge/coverage.svg << BADGEEOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="140" height="20" role="img" aria-label="coverage: ${RATE}%25">
+            <linearGradient id="s" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <clipPath id="r">
+              <rect width="140" height="20" rx="3" fill="#fff"/>
+            </clipPath>
+            <g clip-path="url(#r)">
+              <rect width="74" height="20" fill="#555"/>
+              <rect x="74" width="66" height="20" fill="#${COLOR}"/>
+              <rect width="140" height="20" fill="url(#s)"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">
+              <text x="37" y="15" fill="#010101" fill-opacity=".3">coverage</text>
+              <text x="37" y="14">coverage</text>
+              <text x="106" y="15" fill="#010101" fill-opacity=".3">${LABEL}</text>
+              <text x="106" y="14">${LABEL}</text>
+            </g>
+          </svg>
+          BADGEEOF
+
+          # Generate JSON badge data for shields.io dynamic badge
+          cat > /tmp/badge/coverage.json << JSONEOF
+          {
+            "schemaVersion": 1,
+            "label": "coverage",
+            "message": "${RATE}%25",
+            "color": "${COLOR}"
+          }
+          JSONEOF
+
+          echo "badge_path=/tmp/badge" >> $GITHUB_OUTPUT
+
+      - name: Upload coverage badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: /tmp/badge/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ${{ steps.coverage.outputs.report_path }}
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upload test output
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: /tmp/test-output.txt
+          retention-days: 30
+          if-no-files-found: error
+
       - name: Read coverage report
         id: report
         run: |
@@ -114,8 +198,8 @@ jobs:
                 ? 'All tests pass. Coverage meets the 100% threshold.'
                 : `⚠️ Coverage dropped below ${required}%. ${failCount} test(s) failing.`,
               '',
-              '---',
-              `*CI check generated at ${new Date().toISOString()}*`,
+              '### Coverage Badge',
+              `![coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/${{ github.repository }}/main/coverage-badge.json)`,
               '',
               '### Coverage by Area',
               '',
@@ -125,6 +209,13 @@ jobs:
               '| App Features | ✅ Generation, upload, cost, auth, templates, bulk |',
               '| Unit/Integration | ✅ Auth, FNF, approval, results, history, projects, security |',
               '| Generation Flow | ✅ PromptBox, gpt_image_2, batchSize, sign-in, pick-best |',
+              '',
+              '### Artifacts',
+              `- [Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`,
+              `- [Coverage Badge](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`,
+              '',
+              '---',
+              `*CI check generated at ${new Date().toISOString()}*`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
