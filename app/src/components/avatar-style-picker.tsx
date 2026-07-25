@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Button } from "@higgsfield/quanta/button";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Typography } from "@higgsfield/quanta/typography";
 import { Modal } from "@higgsfield/quanta/modal";
 import { Input } from "@higgsfield/quanta/input";
-import { Heart, HeartOff, Sparkles, Grid3X3 } from "lucide-react";
+import { Heart, HeartOff, Grid3X3, Search, Download, Upload, Check } from "lucide-react";
 
 export interface AvatarStyle {
   value: string;
@@ -12,6 +12,7 @@ export interface AvatarStyle {
   subtitle: string;
   gradient: string;
   emoji: string;
+  previewSvg: string;
 }
 
 const FAVORITES_KEY = "orgasmo_avatar_favorites";
@@ -31,29 +32,59 @@ function saveFavorites(favorites: string[]) {
   } catch {}
 }
 
+function generatePreviewSvg(emoji: string, gradient: string, title: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${gradient.split(",")[0].split("(")[1].trim() || "#333"}" />
+        <stop offset="100%" stop-color="${gradient.split(",").pop()?.split(")")[0]?.trim() || "#111"}" />
+      </linearGradient>
+    </defs>
+    <rect width="200" height="150" fill="url(#g)" rx="8" />
+    <text x="100" y="75" text-anchor="middle" dominant-baseline="central" font-size="40">${emoji}</text>
+    <text x="100" y="125" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="11" font-family="sans-serif">${title}</text>
+  </svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 export const AVATAR_STYLE_DEFS: AvatarStyle[] = [
-  { value: "professional", title: "Professional", subtitle: "Corporate headshot", gradient: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", emoji: "💼" },
-  { value: "fantasy", title: "Fantasy", subtitle: "Mythical character", gradient: "linear-gradient(135deg, #2d1b69 0%, #11998e 100%)", emoji: "🧙" },
-  { value: "cartoon", title: "Cartoon", subtitle: "Animated style", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", emoji: "🎨" },
-  { value: "cyberpunk", title: "Cyberpunk", subtitle: "Futuristic neon", gradient: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)", emoji: "🤖" },
-  { value: "anime", title: "Anime", subtitle: "Japanese animation", gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", emoji: "🌸" },
-  { value: "realistic", title: "Realistic", subtitle: "Photorealistic", gradient: "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)", emoji: "📸" },
-  { value: "pixel", title: "Pixel Art", subtitle: "Retro game style", gradient: "linear-gradient(135deg, #0f9b0f 0%, #00d2ff 100%)", emoji: "🕹️" },
-  { value: "noir", title: "Noir", subtitle: "Film noir", gradient: "linear-gradient(135deg, #000000 0%, #434343 100%)", emoji: "🎬" },
-  { value: "watercolor", title: "Watercolor", subtitle: "Soft painted style", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", emoji: "🎨" },
-  { value: "oilpainting", title: "Oil Painting", subtitle: "Classic canvas art", gradient: "linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)", emoji: "🖼️" },
-  { value: "sketch", title: "Sketch", subtitle: "Pencil drawing", gradient: "linear-gradient(135deg, #606c88 0%, #3f4c6b 100%)", emoji: "✏️" },
-  { value: "3drender", title: "3D Render", subtitle: "CGI realistic", gradient: "linear-gradient(135deg, #00b4db 0%, #0083b0 100%)", emoji: "💎" },
-  { value: "steampunk", title: "Steampunk", subtitle: "Victorian sci-fi", gradient: "linear-gradient(135deg, #3e1f00 0%, #b8860b 100%)", emoji: "⚙️" },
-  { value: "gothic", title: "Gothic", subtitle: "Dark romantic", gradient: "linear-gradient(135deg, #1a0000 0%, #4a0000 100%)", emoji: "🦇" },
-  { value: "popart", title: "Pop Art", subtitle: "Comic book style", gradient: "linear-gradient(135deg, #ff6b6b 0%, #ffd93d 50%, #6bcb77 100%)", emoji: "💥" },
-  { value: "renaissance", title: "Renaissance", subtitle: "Classical portrait", gradient: "linear-gradient(135deg, #8b4513 0%, #d4a574 100%)", emoji: "🎭" },
-  { value: "vaporwave", title: "Vaporwave", subtitle: "80s retro aesthetic", gradient: "linear-gradient(135deg, #ff00cc 0%, #333399 100%)", emoji: "🌴" },
-  { value: "minimalist", title: "Minimalist", subtitle: "Clean line art", gradient: "linear-gradient(135deg, #e0e0e0 0%, #ffffff 100%)", emoji: "○" },
+  { value: "professional", title: "Professional", subtitle: "Corporate headshot", gradient: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", emoji: "💼", previewSvg: "" },
+  { value: "fantasy", title: "Fantasy", subtitle: "Mythical character", gradient: "linear-gradient(135deg, #2d1b69 0%, #11998e 100%)", emoji: "🧙", previewSvg: "" },
+  { value: "cartoon", title: "Cartoon", subtitle: "Animated style", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", emoji: "🎨", previewSvg: "" },
+  { value: "cyberpunk", title: "Cyberpunk", subtitle: "Futuristic neon", gradient: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)", emoji: "🤖", previewSvg: "" },
+  { value: "anime", title: "Anime", subtitle: "Japanese animation", gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", emoji: "🌸", previewSvg: "" },
+  { value: "realistic", title: "Realistic", subtitle: "Photorealistic", gradient: "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)", emoji: "📸", previewSvg: "" },
+  { value: "pixel", title: "Pixel Art", subtitle: "Retro game style", gradient: "linear-gradient(135deg, #0f9b0f 0%, #00d2ff 100%)", emoji: "🕹️", previewSvg: "" },
+  { value: "noir", title: "Noir", subtitle: "Film noir", gradient: "linear-gradient(135deg, #000000 0%, #434343 100%)", emoji: "🎬", previewSvg: "" },
+  { value: "watercolor", title: "Watercolor", subtitle: "Soft painted style", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", emoji: "🎨", previewSvg: "" },
+  { value: "oilpainting", title: "Oil Painting", subtitle: "Classic canvas art", gradient: "linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)", emoji: "🖼️", previewSvg: "" },
+  { value: "sketch", title: "Sketch", subtitle: "Pencil drawing", gradient: "linear-gradient(135deg, #606c88 0%, #3f4c6b 100%)", emoji: "✏️", previewSvg: "" },
+  { value: "3drender", title: "3D Render", subtitle: "CGI realistic", gradient: "linear-gradient(135deg, #00b4db 0%, #0083b0 100%)", emoji: "💎", previewSvg: "" },
+  { value: "steampunk", title: "Steampunk", subtitle: "Victorian sci-fi", gradient: "linear-gradient(135deg, #3e1f00 0%, #b8860b 100%)", emoji: "⚙️", previewSvg: "" },
+  { value: "gothic", title: "Gothic", subtitle: "Dark romantic", gradient: "linear-gradient(135deg, #1a0000 0%, #4a0000 100%)", emoji: "🦇", previewSvg: "" },
+  { value: "popart", title: "Pop Art", subtitle: "Comic book style", gradient: "linear-gradient(135deg, #ff6b6b 0%, #ffd93d 50%, #6bcb77 100%)", emoji: "💥", previewSvg: "" },
+  { value: "renaissance", title: "Renaissance", subtitle: "Classical portrait", gradient: "linear-gradient(135deg, #8b4513 0%, #d4a574 100%)", emoji: "🎭", previewSvg: "" },
+  { value: "vaporwave", title: "Vaporwave", subtitle: "80s retro aesthetic", gradient: "linear-gradient(135deg, #ff00cc 0%, #333399 100%)", emoji: "🌴", previewSvg: "" },
+  { value: "minimalist", title: "Minimalist", subtitle: "Clean line art", gradient: "linear-gradient(135deg, #e0e0e0 0%, #ffffff 100%)", emoji: "○", previewSvg: "" },
 ];
+
+// Generate preview SVGs
+AVATAR_STYLE_DEFS.forEach((s) => {
+  s.previewSvg = generatePreviewSvg(s.emoji, s.gradient, s.title);
+});
 
 export function getStyleByValue(value: string): AvatarStyle | undefined {
   return AVATAR_STYLE_DEFS.find((s) => s.value === value);
+}
+
+function downloadFile(content: string, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export function AvatarStyleCard({
@@ -80,14 +111,17 @@ export function AvatarStyleCard({
             : "border-transparent hover:border-q-border-subtle"
         } rounded-q-500`}
       >
-        {/* Preview gradient */}
         <div
-          className="flex h-20 items-center justify-center"
+          className="relative flex h-20 items-center justify-center overflow-hidden"
           style={{ backgroundImage: style.gradient }}
         >
-          <span className="text-3xl drop-shadow-lg">{style.emoji}</span>
+          <img
+            src={style.previewSvg}
+            alt={style.title}
+            className="absolute inset-0 size-full object-cover"
+          />
+          <span className="relative text-3xl drop-shadow-lg">{style.emoji}</span>
         </div>
-        {/* Label */}
         <div className="flex flex-col gap-0.5 bg-q-background-secondary px-2.5 py-2">
           <Typography as="span" variant="label-sm-medium" color="primary" truncate>
             {style.title}
@@ -97,8 +131,6 @@ export function AvatarStyleCard({
           </Typography>
         </div>
       </button>
-
-      {/* Favorite toggle */}
       <button
         type="button"
         onClick={(e) => {
@@ -131,7 +163,10 @@ export function AvatarStylePickerModal({
 }) {
   const [favorites, setFavorites] = useState<string[]>(loadFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [customCountInput, setCustomCountInput] = useState(String(customCount));
+  const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     saveFavorites(favorites);
@@ -143,17 +178,56 @@ export function AvatarStylePickerModal({
     );
   };
 
+  const handleExport = () => {
+    const data = JSON.stringify({ favorites, exportedAt: new Date().toISOString(), count: favorites.length }, null, 2);
+    downloadFile(data, `orgasmo-favorites-${new Date().toISOString().split("T")[0]}.json`, "application/json");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data.favorites && Array.isArray(data.favorites)) {
+          const valid = data.favorites.filter((v: string) =>
+            AVATAR_STYLE_DEFS.some((s) => s.value === v)
+          );
+          setFavorites(valid);
+        }
+      } catch {}
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   const filteredStyles = useMemo(() => {
-    const all = showFavorites
-      ? AVATAR_STYLE_DEFS.filter((s) => favorites.includes(s.value))
-      : AVATAR_STYLE_DEFS;
-    // Put favorites first
+    let all = AVATAR_STYLE_DEFS;
+    if (showFavorites) {
+      all = all.filter((s) => favorites.includes(s.value));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      all = all.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.subtitle.toLowerCase().includes(q) ||
+          s.value.toLowerCase().includes(q),
+      );
+    }
     return [...all].sort((a, b) => {
       const aFav = favorites.includes(a.value) ? 1 : 0;
       const bFav = favorites.includes(b.value) ? 1 : 0;
       return bFav - aFav;
     });
-  }, [favorites, showFavorites]);
+  }, [favorites, showFavorites, searchQuery]);
 
   return (
     <Modal.Root open={open} onOpenChange={onOpenChange}>
@@ -166,43 +240,84 @@ export function AvatarStylePickerModal({
           <Modal.CloseButton />
         </Modal.Header>
 
-        <div className="flex items-center justify-between gap-4 px-4 pb-3">
-          <div className="flex items-center gap-2">
-            <Button
-              variant={showFavorites ? "primary" : "tertiary"}
-              size="sm"
-              onClick={() => setShowFavorites(!showFavorites)}
-              start={<Icon as={Heart} size="sm" />}
-            >
-              {showFavorites ? "All Styles" : `Favorites (${favorites.length})`}
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Typography as="span" variant="caption-sm-regular" color="tertiary">
-              Batch count:
-            </Typography>
+        {/* Search + toolbar */}
+        <div className="flex flex-col gap-3 px-4 pb-3">
+          <div className="relative">
+            <Icon as={Search} size="sm" className="absolute left-3 top-1/2 -translate-y-1/2 text-q-text-tertiary" />
             <Input
-              type="number"
-              value={customCountInput}
-              onChange={(e) => {
-                setCustomCountInput(e.target.value);
-                const n = parseInt(e.target.value, 10);
-                if (n >= 1 && n <= 36) onCustomCountChange(n);
-              }}
-              className="w-16"
-              min={1}
-              max={36}
-              aria-label="Custom batch count"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search styles..."
+              className="w-full pl-9"
+              aria-label="Search avatar styles"
             />
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showFavorites ? "primary" : "tertiary"}
+                size="sm"
+                onClick={() => setShowFavorites(!showFavorites)}
+                start={<Icon as={Heart} size="sm" />}
+              >
+                {showFavorites ? "All Styles" : `Favorites (${favorites.length})`}
+              </Button>
+              <Button
+                variant="tertiary"
+                size="sm"
+                onClick={handleExport}
+                start={<Icon as={copied ? Check : Download} size="sm" />}
+                disabled={favorites.length === 0}
+              >
+                {copied ? "Exported" : "Export"}
+              </Button>
+              <Button
+                variant="tertiary"
+                size="sm"
+                onClick={handleImport}
+                start={<Icon as={Upload} size="sm" />}
+              >
+                Import
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleFileSelected}
+                className="hidden"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Typography as="span" variant="caption-sm-regular" color="tertiary">
+                Batch:
+              </Typography>
+              <Input
+                type="number"
+                value={customCountInput}
+                onChange={(e) => {
+                  setCustomCountInput(e.target.value);
+                  const n = parseInt(e.target.value, 10);
+                  if (n >= 1 && n <= 36) onCustomCountChange(n);
+                }}
+                className="w-16"
+                min={1}
+                max={36}
+                aria-label="Custom batch count"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="max-h-[400px] min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        {/* Style grid */}
+        <div className="max-h-[360px] min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           {filteredStyles.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <Icon as={HeartOff} size="lg" className="text-q-text-tertiary" />
+              <Icon as={searchQuery ? Search : HeartOff} size="lg" className="text-q-text-tertiary" />
               <Typography as="p" variant="body-sm-regular" color="tertiary">
-                No favorites yet. Click the heart icon on a style to add it.
+                {searchQuery
+                  ? `No styles matching "${searchQuery}"`
+                  : "No favorites yet. Click the heart icon on a style to add it."}
               </Typography>
             </div>
           ) : (
@@ -226,8 +341,9 @@ export function AvatarStylePickerModal({
 
         <Modal.Footer>
           <Modal.FooterCaption>
-            {filteredStyles.length} styles
+            {filteredStyles.length} of {AVATAR_STYLE_DEFS.length} styles
             {favorites.length > 0 ? ` · ${favorites.length} favorited` : ""}
+            {searchQuery ? ` · searching "${searchQuery}"` : ""}
           </Modal.FooterCaption>
         </Modal.Footer>
       </Modal.Content>
