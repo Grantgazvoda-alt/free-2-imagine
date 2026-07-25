@@ -23,7 +23,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -134,6 +134,23 @@ const AVATAR_STYLES = [
   { value: "realistic", title: "Realistic", subtitle: "Photorealistic" },
   { value: "pixel", title: "Pixel Art", subtitle: "Retro game style" },
   { value: "noir", title: "Noir", subtitle: "Film noir" },
+  { value: "watercolor", title: "Watercolor", subtitle: "Soft painted style" },
+  { value: "oilpainting", title: "Oil Painting", subtitle: "Classic canvas art" },
+  { value: "sketch", title: "Sketch", subtitle: "Pencil drawing" },
+  { value: "3drender", title: "3D Render", subtitle: "CGI realistic" },
+  { value: "steampunk", title: "Steampunk", subtitle: "Victorian sci-fi" },
+  { value: "gothic", title: "Gothic", subtitle: "Dark romantic" },
+  { value: "popart", title: "Pop Art", subtitle: "Comic book style" },
+  { value: "renaissance", title: "Renaissance", subtitle: "Classical portrait" },
+  { value: "vaporwave", title: "Vaporwave", subtitle: "80s retro aesthetic" },
+  { value: "minimalist", title: "Minimalist", subtitle: "Clean line art" },
+];
+
+const BATCH_OPTIONS = [
+  { value: "1", title: "Single style", subtitle: "Pick one style" },
+  { value: "all", title: "All styles", subtitle: "Generate all 18" },
+  { value: "4", title: "4 styles", subtitle: "Random selection" },
+  { value: "6", title: "6 styles", subtitle: "Random selection" },
 ];
 
 const PROMPT_MODES: PromptModeOption[] = [
@@ -165,10 +182,10 @@ function getSettings(mode: string): PromptSettingOption[] {
         options: AVATAR_STYLES,
       },
       {
-        id: "variations",
-        start: <Icon as={IconLayers} size="sm" />,
+        id: "avatarBatch",
+        start: <Icon as={IconBatch} size="sm" />,
         defaultValue: "1",
-        options: VARIATIONS,
+        options: BATCH_OPTIONS,
       },
     ];
   }
@@ -625,6 +642,7 @@ export function StudioTemplate() {
     aspectRatio: "1:1",
     style: "natural",
     avatarStyle: "professional",
+    avatarBatch: "1",
     variations: "1",
   });
   const [references, setReferences] = useState<Record<string, AssetSelection | undefined>>({});
@@ -790,6 +808,8 @@ export function StudioTemplate() {
     const images = selections.map(({ ref }) => ref);
 
     let instruction: string;
+    let batchSize = parseInt(settingValues.variations ?? "1", 10);
+
     if (mode === "avatar") {
       const styleNames: Record<string, string> = {
         professional: "professional corporate headshot",
@@ -800,17 +820,51 @@ export function StudioTemplate() {
         realistic: "photorealistic portrait",
         pixel: "pixel art retro game character",
         noir: "film noir dramatic portrait",
+        watercolor: "soft watercolor painting",
+        oilpainting: "classic oil painting on canvas",
+        sketch: "pencil sketch drawing",
+        "3drender": "photorealistic 3D CGI render",
+        steampunk: "steampunk Victorian sci-fi",
+        gothic: "dark gothic romantic",
+        popart: "vibrant pop art comic style",
+        renaissance: "classical Renaissance oil portrait",
+        vaporwave: "retro 80s vaporwave aesthetic",
+        minimalist: "clean minimalist line art",
       };
-      const styleDesc = styleNames[style] ?? style;
-      const basePrompt = prompt.trim() || "a person";
-      instruction = [
-        `Create a ${styleDesc} based on the reference photo.`,
-        `Style: ${styleDesc}.`,
-        basePrompt,
-        "Keep the facial features and identity of the reference person. Apply the style to the background, clothing, and overall aesthetic.",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
+
+      const avatarBatch = settingValues.avatarBatch ?? "1";
+      const selectedStyle = settingValues.avatarStyle ?? "professional";
+
+      if (avatarBatch === "1") {
+        const styleDesc = styleNames[selectedStyle] ?? selectedStyle;
+        const basePrompt = prompt.trim() || "a person";
+        instruction = [
+          `Create a ${styleDesc} based on the reference photo.`,
+          `Style: ${styleDesc}.`,
+          basePrompt,
+          "Keep the facial features and identity of the reference person. Apply the style to the background, clothing, and overall aesthetic.",
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        batchSize = 1;
+      } else {
+        const count = avatarBatch === "all" ? 18 : parseInt(avatarBatch, 10);
+        const allStyles = Object.keys(styleNames);
+        const pickedStyles = avatarBatch === "all"
+          ? allStyles
+          : [...allStyles].sort(() => Math.random() - 0.5).slice(0, count);
+        const basePrompt = prompt.trim() || "a person";
+        instruction = [
+          `Generate ${pickedStyles.length} different avatar portraits of the same person from the reference photo.`,
+          "Each portrait should be a different artistic style.",
+          pickedStyles.map((s, i) => `Variation ${i + 1}: ${styleNames[s] ?? s}.`).join("\n"),
+          basePrompt,
+          "Keep the facial features and identity of the reference person consistent across all variations.",
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        batchSize = pickedStyles.length;
+      }
     } else {
       instruction = [
         style !== "natural" ? `Style: ${style}.` : "",
@@ -834,10 +888,10 @@ export function StudioTemplate() {
         aspectRatio: aspectRatio ?? "1:1",
         quality: "high" as const,
         resolution: "2k" as const,
-        batchSize: parseInt(settingValues.variations ?? "1", 10),
+        batchSize,
       },
     };
-  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style, settingValues.avatarStyle, settingValues.variations]);
+  }, [mode, prompt, references, settingValues.aspectRatio, settingValues.style, settingValues.avatarStyle, settingValues.avatarBatch, settingValues.variations]);
 
   const hasReference = Object.values(references).some((selection) => selection?.ref != null);
   const canGenerate = prompt.trim().length > 0 || hasReference;
