@@ -20,7 +20,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { AspectRatio as IconAspectRatio, Paintbrush as IconStyle } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -99,11 +99,11 @@ const HERO_FALLBACKS = [
 ] as const;
 
 const ASPECT_RATIOS = [
-  { value: "1:1", title: "Square", subtitle: "1:1" },
-  { value: "3:4", title: "Portrait", subtitle: "3:4" },
-  { value: "4:3", title: "Landscape", subtitle: "4:3" },
-  { value: "16:9", title: "Wide", subtitle: "16:9" },
-  { value: "9:16", title: "Story", subtitle: "9:16" },
+  { value: "1:1" as const, title: "Square", subtitle: "1:1" },
+  { value: "3:4" as const, title: "Portrait", subtitle: "3:4" },
+  { value: "4:3" as const, title: "Landscape", subtitle: "4:3" },
+  { value: "16:9" as const, title: "Wide", subtitle: "16:9" },
+  { value: "9:16" as const, title: "Story", subtitle: "9:16" },
 ];
 
 const STYLES = [
@@ -719,7 +719,7 @@ export function StudioTemplate() {
   );
 
   const input = useMemo<StudioGenerationInput>(() => {
-    const aspectRatio = settingValues.aspectRatio ?? "1:1";
+    const aspectRatio = (settingValues.aspectRatio ?? "1:1") as "1:1" | "16:9" | "4:3" | "3:4" | "9:16" | "2:3" | "3:2" | "21:9" | "auto" | undefined;
     const style = settingValues.style ?? "natural";
     const selections = Object.values(references).flatMap((selection) =>
       selection?.ref ? [{ kind: selection.kind, ref: selection.ref }] : [],
@@ -743,9 +743,9 @@ export function StudioTemplate() {
           }
         : {}),
       settings: {
-        aspectRatio,
-        quality: "high",
-        resolution: "2k",
+        aspectRatio: aspectRatio ?? "1:1",
+        quality: "high" as const,
+        resolution: "2k" as const,
         batchSize: 1,
       },
     };
