@@ -23,7 +23,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -262,6 +262,12 @@ function StudioSidebar({
               onClick={() => onViewChange({ kind: "all" })}
               start={<IconTile as={IconImagesFilled} gradient="purple" />}
               title="All Generations"
+            />
+            <Sidebar.Item
+              selected={false}
+              onClick={() => { window.location.href = "/analytics"; }}
+              start={<Icon as={IconAnalytics} size="md" className="text-q-icon-secondary" />}
+              title="Analytics"
             />
           </Sidebar.SectionItems>
         </Sidebar.Section>

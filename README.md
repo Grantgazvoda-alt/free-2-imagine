@@ -170,3 +170,106 @@ To publish to the Higgsfield community feed, the app cover and icon must be gene
 ## Credits
 
 Built with the [Higgsfield](https://higgsfield.ai) platform.
+---
+
+## API Reference
+
+### Server Functions
+
+The app uses TanStack Start server functions (`createServerFn`) for all backend operations. These run server-side on Cloudflare Workers.
+
+#### Authentication
+
+| Function | Method | Description |
+|---|---|---|
+| `/api/user` | GET | Returns the current user profile. Proxies `https://fnf.internal/user`. Returns `401` with `{"error":"unauthenticated"}` when not signed in. |
+| `/__auth/login?return=<path>` | GET | Redirects to Higgsfield sign-in. After login, redirects back to `return` path. |
+| `/__auth/logout?return=<path>` | GET | Signs out the current user and redirects to `return` path. |
+
+#### Generation
+
+| Function | Method | Input | Description |
+|---|---|---|---|
+| `createJobsFn` | POST | `{ jobSetType, params, confirmationToken? }` | Submit a generation job to the FNF pipeline. |
+| `getJobFn` | POST | `{ id }` | Get a single generation job by ID. |
+| `getJobSetFn` | POST | `{ id }` | Get all generations in a job set. |
+| `listJobsFn` | POST | `{ type?, cursor?, size?, parentId?, status?, model? }` | List generations with optional filters. |
+| `estimateCostFn` | POST | `{ jobSetType, params }` | Get the credit cost estimate for a generation input. |
+| `cancelJobFn` | POST | `{ id }` | Cancel a running generation job. |
+
+#### Media
+
+| Function | Method | Input | Description |
+|---|---|---|---|
+| `getMediaFn` | POST | `{ id, type }` | Get a media reference by ID. |
+| `listMediaFn` | POST | `{ type, cursor?, size? }` | List uploaded media with pagination. |
+| `/api/media/upload` | POST | multipart/form-data with `file` field | Upload an image file. Returns a `MediaRef` with ID and URL. |
+
+#### Profile & Workspace
+
+| Function | Method | Input | Description |
+|---|---|---|---|
+| `getUserFn` | POST | — | Get the current authenticated user. |
+| `listWorkspacesFn` | POST | — | List available workspaces. |
+| `getCurrentWorkspaceFn` | POST | — | Get the active workspace. |
+| `getWorkspaceWalletFn` | POST | — | Get wallet/credits balance. |
+| `switchWorkspaceFn` | POST | `{ workspaceId }` | Switch to a different workspace. |
+
+#### Studio Projects
+
+| Function | Method | Input | Description |
+|---|---|---|---|
+| `listStudioProjectsFn` | POST | — | List all projects for the current user/workspace. |
+| `createStudioProjectFn` | POST | `{ name }` | Create a new project. |
+| `renameStudioProjectFn` | POST | `{ projectId, name }` | Rename an existing project. |
+| `deleteStudioProjectFn` | POST | `{ projectId }` | Delete a project (generations are kept). |
+| `linkStudioGenerationsFn` | POST | `{ projectId, generationIds }` | Link generations to a project. |
+
+#### Analytics
+
+| Function | Method | Input | Description |
+|---|---|---|---|
+| `trackEventFn` | POST | `{ eventType, eventName, pagePath?, sessionId?, userScope?, metadata? }` | Record an analytics event (page_view, feature_use, or generation). |
+| `getAnalyticsSummaryFn` | POST | — | Get analytics summary (page views, top pages, recent events, feature usage, daily views). |
+
+### Generation Input Schema
+
+The generation input passed to `run.start()` follows the `gpt_image_2` job schema:
+
+```typescript
+{
+  model: "gpt_image_2",
+  prompt: { instruction: string },
+  media?: { image: MediaRef[] },
+  settings: {
+    aspectRatio: "1:1" | "3:4" | "4:3" | "16:9" | "9:16",
+    quality: "low" | "medium" | "high",
+    resolution: "1k" | "2k" | "4k",
+    batchSize: 1 | 2 | 3 | 4,
+  }
+}
+```
+
+### Error Codes
+
+Common errors returned by server functions:
+
+| Code | Description |
+|---|---|
+| `out_of_credits` | The user's account has insufficient credits. |
+| `rate_limit` | Too many requests. |
+| `prompt_nsfw` | The prompt was flagged by moderation. |
+| `job_failed` | The generation job failed. |
+| `timeout` | The generation timed out. |
+| `validation` | Invalid input parameters. |
+| `confirmation_rejected` | The user declined the cost confirmation. |
+| `db_unavailable` | The database is not configured. |
+| `internal_error` | An unexpected server error occurred. |
+
+### Database Schema (D1)
+
+The app uses Cloudflare D1 with these tables:
+
+- **`analytics_events`** — Page views, feature usage, and generation events.
+- **`studio_projects`** — User-created projects for organizing generations.
+- **`studio_generation_projects`** — Links between generations and projects.

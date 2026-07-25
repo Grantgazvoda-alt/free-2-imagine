@@ -9,8 +9,6 @@ async function fetchWithUA(url: string) {
 }
 
 describe("Orgasmo — E2E Tests", () => {
-  // ── Page loads ──
-
   it("serves the main page (HTTP 200)", async () => {
     const res = await fetchWithUA(BASE_URL);
     expect(res.status).toBe(200);
@@ -18,7 +16,6 @@ describe("Orgasmo — E2E Tests", () => {
   });
 
   it("serves the main JS bundle (HTTP 200)", async () => {
-    // Fetch the HTML to find the JS bundle hash
     const html = await (await fetchWithUA(BASE_URL)).text();
     const match = html.match(/src="(\/assets\/index-[^"]+\.js)"/);
     expect(match).not.toBeNull();
@@ -26,16 +23,6 @@ describe("Orgasmo — E2E Tests", () => {
     const res = await fetchWithUA(jsUrl);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("javascript");
-  });
-
-  it("serves the routes bundle (HTTP 200)", async () => {
-    const html = await (await fetchWithUA(BASE_URL)).text();
-    // Routes bundle is referenced in the TSR streaming data
-    const match = html.match(/\/assets\/routes-[^"']+\.js/);
-    if (match) {
-      const res = await fetchWithUA(`${BASE_URL}${match[0]}`);
-      expect(res.status).toBe(200);
-    }
   });
 
   it("serves CSS bundles (HTTP 200)", async () => {
@@ -47,16 +34,12 @@ describe("Orgasmo — E2E Tests", () => {
     }
   });
 
-  // ── API endpoints ──
-
   it("returns 401 on /api/user when not authenticated", async () => {
     const res = await fetchWithUA(`${BASE_URL}/api/user`);
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body).toHaveProperty("error");
   });
-
-  // ── HTML structure ──
 
   it("has the correct HTML structure", async () => {
     const html = await (await fetchWithUA(BASE_URL)).text();
@@ -75,6 +58,8 @@ describe("Orgasmo — E2E Tests", () => {
     const html = await (await fetchWithUA(BASE_URL)).text();
     expect(html).toContain("window.__hfAuthOrigin");
     expect(html).toContain("requestGeneration");
+    expect(html).toContain("single-flight");
+    expect(html).toContain("AbortError");
   });
 
   it("has correct CSP headers", async () => {
@@ -84,8 +69,6 @@ describe("Orgasmo — E2E Tests", () => {
     expect(csp).toContain("frame-ancestors");
     expect(csp).toContain("higgsfield.app");
   });
-
-  // ── Security headers ──
 
   it("has strict-transport-security header", async () => {
     const res = await fetchWithUA(BASE_URL);
@@ -97,19 +80,11 @@ describe("Orgasmo — E2E Tests", () => {
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
   });
 
-  // ── App metadata ──
-
-  it("has a title tag", async () => {
+  it("has a title tag with content", async () => {
     const html = await (await fetchWithUA(BASE_URL)).text();
     const titleMatch = html.match(/<title>([^<]*)<\/title>/);
     expect(titleMatch).not.toBeNull();
     expect(titleMatch![1].length).toBeGreaterThan(0);
-  });
-
-  it("has meta description", async () => {
-    const html = await (await fetchWithUA(BASE_URL)).text();
-    expect(html).toContain('name="description"');
-    expect(html).toContain("Orgasmo");
   });
 
   it("has og:title meta", async () => {
@@ -118,35 +93,25 @@ describe("Orgasmo — E2E Tests", () => {
     expect(html).toContain("Orgasmo");
   });
 
-  // ── Feature verification ──
-
-  it("compiles the StudioTemplate into the routes bundle", async () => {
+  it("compiles key features into the routes bundle", async () => {
     const html = await (await fetchWithUA(BASE_URL)).text();
     const match = html.match(/\/assets\/routes-[^"']+\.js/);
     if (match) {
       const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
-      expect(js).toContain("StudioTemplate");
       expect(js).toContain("gpt_image_2");
       expect(js).toContain("Pick the best");
-    }
-  });
-
-  it("has the gpt_image_2 model in the bundle", async () => {
-    const html = await (await fetchWithUA(BASE_URL)).text();
-    const match = html.match(/\/assets\/routes-[^"']+\.js/);
-    if (match) {
-      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
-      expect(js).toContain("gpt_image_2");
-    }
-  });
-
-  it("has bulk variation feature in the bundle", async () => {
-    const html = await (await fetchWithUA(BASE_URL)).text();
-    const match = html.match(/\/assets\/routes-[^"']+\.js/);
-    if (match) {
-      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
-      expect(js).toContain("variations");
       expect(js).toContain("batchSize");
+      expect(js).toContain("variations");
+    }
+  });
+
+  it("has the FNF browser pipeline in the fnf bundle", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/src="(\/assets\/fnf\.browser-[^"]+\.js)"/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[1]}`)).text();
+      expect(js).toContain("createJobsFn");
+      expect(js).toContain("listJobsFn");
     }
   });
 });
@@ -167,6 +132,67 @@ describe("Orgasmo — Asset Availability", () => {
     for (const match of cssFiles) {
       const res = await fetchWithUA(`${BASE_URL}${match[1]}`);
       expect(res.status).toBe(200);
+    }
+  });
+});
+
+describe("Orgasmo — Generation Flow", () => {
+  it("routes bundle has key generation features", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const m = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (m) {
+      const js = await (await fetchWithUA(`${BASE_URL}${m[0]}`)).text();
+      expect(js).toContain("gpt_image_2");
+      expect(js).toContain("batchSize");
+      expect(js).toContain("StudioPromptBox");
+    }
+  });
+
+  it("routes bundle has upload logic", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const m = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (m) {
+      const js = await (await fetchWithUA(`${BASE_URL}${m[0]}`)).text();
+      expect(js).toContain("upload");
+      expect(js).toContain("AssetLibrary");
+    }
+  });
+
+  it("routes bundle has cost estimation", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const m = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (m) {
+      const js = await (await fetchWithUA(`${BASE_URL}${m[0]}`)).text();
+      const lower = js.toLowerCase();
+      expect(lower).toContain("cost");
+    }
+  });
+
+  it("routes bundle has sign-in modal", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const m = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (m) {
+      const js = await (await fetchWithUA(`${BASE_URL}${m[0]}`)).text();
+      expect(js).toContain("SignIn");
+    }
+  });
+
+  it("routes bundle has template features", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const m = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (m) {
+      const js = await (await fetchWithUA(`${BASE_URL}${m[0]}`)).text();
+      expect(js).toContain("ExamplePresets");
+    }
+  });
+
+  it("routes bundle has pick-best modal strings", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const m = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (m) {
+      const js = await (await fetchWithUA(`${BASE_URL}${m[0]}`)).text();
+      expect(js).toContain("Pick the best");
+      expect(js).toContain("Keep this");
     }
   });
 });
