@@ -359,7 +359,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex shrink-0 items-center rounded-q-200 px-2 py-0.5 text-q-caption-xs-bold uppercase ${
+              className={`inline-flex shrink-0 items-center rounded-q-200 px-2 py-0.5 text-q-caption-xs-semi-bold uppercase ${
                 endpoint.method === "GET"
                   ? "bg-green-500/20 text-green-400"
                   : "bg-blue-500/20 text-blue-400"
@@ -391,7 +391,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
 
       {endpoint.input && (
         <div className="flex flex-col gap-1">
-          <Typography as="span" variant="caption-xs-bold" color="tertiary" className="uppercase tracking-wider">
+          <Typography as="span" variant="caption-xs-semi-bold" color="tertiary" className="uppercase tracking-wider">
             Request
           </Typography>
           <pre className="overflow-x-auto rounded-q-300 bg-q-background-tertiary p-3 text-q-caption-xs-regular text-q-text-secondary">
@@ -402,7 +402,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
 
       {endpoint.output && (
         <div className="flex flex-col gap-1">
-          <Typography as="span" variant="caption-xs-bold" color="tertiary" className="uppercase tracking-wider">
+          <Typography as="span" variant="caption-xs-semi-bold" color="tertiary" className="uppercase tracking-wider">
             Response
           </Typography>
           <pre className="overflow-x-auto rounded-q-300 bg-q-background-tertiary p-3 text-q-caption-xs-regular text-q-text-secondary">
