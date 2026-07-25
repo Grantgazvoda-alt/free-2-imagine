@@ -5,6 +5,7 @@ import type { SubmitInputFor } from "@higgsfield/fnf/client";
 import type { Generation } from "@higgsfield/fnf/client";
 import { getPreviewUrl } from "@higgsfield/fnf/client";
 import { trackGeneration, trackFeatureUse } from "@/lib/use-analytics";
+import { AvatarStylePickerModal, AVATAR_STYLE_DEFS, getStyleByValue } from "@/components/avatar-style-picker";
 import {
   costQueryOptions,
   flattenFeedPages,
@@ -23,7 +24,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch, Grid3X3 as IconGrid } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -125,32 +126,18 @@ const VARIATIONS = [
   { value: "4", title: "4", subtitle: "Four" },
 ];
 
-const AVATAR_STYLES = [
-  { value: "professional", title: "Professional", subtitle: "Corporate headshot" },
-  { value: "fantasy", title: "Fantasy", subtitle: "Mythical character" },
-  { value: "cartoon", title: "Cartoon", subtitle: "Animated style" },
-  { value: "cyberpunk", title: "Cyberpunk", subtitle: "Futuristic neon" },
-  { value: "anime", title: "Anime", subtitle: "Japanese animation" },
-  { value: "realistic", title: "Realistic", subtitle: "Photorealistic" },
-  { value: "pixel", title: "Pixel Art", subtitle: "Retro game style" },
-  { value: "noir", title: "Noir", subtitle: "Film noir" },
-  { value: "watercolor", title: "Watercolor", subtitle: "Soft painted style" },
-  { value: "oilpainting", title: "Oil Painting", subtitle: "Classic canvas art" },
-  { value: "sketch", title: "Sketch", subtitle: "Pencil drawing" },
-  { value: "3drender", title: "3D Render", subtitle: "CGI realistic" },
-  { value: "steampunk", title: "Steampunk", subtitle: "Victorian sci-fi" },
-  { value: "gothic", title: "Gothic", subtitle: "Dark romantic" },
-  { value: "popart", title: "Pop Art", subtitle: "Comic book style" },
-  { value: "renaissance", title: "Renaissance", subtitle: "Classical portrait" },
-  { value: "vaporwave", title: "Vaporwave", subtitle: "80s retro aesthetic" },
-  { value: "minimalist", title: "Minimalist", subtitle: "Clean line art" },
-];
+const AVATAR_STYLES = AVATAR_STYLE_DEFS.map((s) => ({
+  value: s.value,
+  title: `${s.emoji} ${s.title}`,
+  subtitle: s.subtitle,
+}));
 
 const BATCH_OPTIONS = [
   { value: "1", title: "Single style", subtitle: "Pick one style" },
   { value: "all", title: "All styles", subtitle: "Generate all 18" },
   { value: "4", title: "4 styles", subtitle: "Random selection" },
   { value: "6", title: "6 styles", subtitle: "Random selection" },
+  { value: "custom", title: "Custom", subtitle: "Enter a number" },
 ];
 
 const PROMPT_MODES: PromptModeOption[] = [
@@ -469,6 +456,16 @@ function BeforeState({
             </Typography>
           </div>
           <StudioPromptBox {...dock} />
+          {mode === "avatar" && (
+            <button
+              type="button"
+              onClick={() => setStylePickerOpen(true)}
+              className="flex items-center gap-1.5 rounded-q-300 bg-q-transparent-light-05 px-3 py-1.5 text-q-caption-sm-medium text-q-text-secondary transition-colors hover:bg-q-transparent-light-10 hover:text-q-text-primary"
+            >
+              <Icon as={Grid3X3} size="sm" />
+              Browse Styles
+            </button>
+          )}
         </div>
 
         <div className="flex w-full max-w-[900px] flex-col items-start gap-5">
@@ -652,6 +649,8 @@ export function StudioTemplate() {
   const [pendingSignInUrl, setPendingSignInUrl] = useState<string | null>(null);
   const [pickBestOpen, setPickBestOpen] = useState(false);
   const [pickBestBatch, setPickBestBatch] = useState<Generation[]>([]);
+  const [stylePickerOpen, setStylePickerOpen] = useState(false);
+  const [customBatchCount, setCustomBatchCount] = useState(8);
   const prependedIds = useRef(new Set<string>());
   const linkingIds = useRef(new Set<string>());
   const runProjectId = useRef<string | undefined>(undefined);
@@ -836,7 +835,7 @@ export function StudioTemplate() {
       const selectedStyle = settingValues.avatarStyle ?? "professional";
 
       if (avatarBatch === "1") {
-        const styleDesc = styleNames[selectedStyle] ?? selectedStyle;
+        const styleDesc = (getStyleByValue(selectedStyle)?.title ?? selectedStyle).toLowerCase();
         const basePrompt = prompt.trim() || "a person";
         instruction = [
           `Create a ${styleDesc} based on the reference photo.`,
@@ -848,16 +847,19 @@ export function StudioTemplate() {
           .join("\n\n");
         batchSize = 1;
       } else {
-        const count = avatarBatch === "all" ? 18 : parseInt(avatarBatch, 10);
-        const allStyles = Object.keys(styleNames);
+        const count = avatarBatch === "all" ? 18
+          : avatarBatch === "custom" ? customBatchCount
+          : parseInt(avatarBatch, 10);
+        const allStyles = AVATAR_STYLE_DEFS.map((s) => s.value);
         const pickedStyles = avatarBatch === "all"
           ? allStyles
-          : [...allStyles].sort(() => Math.random() - 0.5).slice(0, count);
+          : [...allStyles].sort(() => Math.random() - 0.5).slice(0, Math.min(count, 36));
         const basePrompt = prompt.trim() || "a person";
+        const styleLabels = pickedStyles.map((v) => getStyleByValue(v)?.title ?? v);
         instruction = [
           `Generate ${pickedStyles.length} different avatar portraits of the same person from the reference photo.`,
           "Each portrait should be a different artistic style.",
-          pickedStyles.map((s, i) => `Variation ${i + 1}: ${styleNames[s] ?? s}.`).join("\n"),
+          styleLabels.map((s, i) => `Variation ${i + 1}: ${s}.`).join("\n"),
           basePrompt,
           "Keep the facial features and identity of the reference person consistent across all variations.",
         ]
@@ -1150,6 +1152,16 @@ export function StudioTemplate() {
           </Modal.Footer>
         </Modal.Content>
       </Modal.Root>
+      <AvatarStylePickerModal
+        open={stylePickerOpen}
+        onOpenChange={setStylePickerOpen}
+        selectedStyle={settingValues.avatarStyle ?? "professional"}
+        onSelect={(style) => {
+          setSettingValues((current) => ({ ...current, avatarStyle: style }));
+        }}
+        customCount={customBatchCount}
+        onCustomCountChange={setCustomBatchCount}
+      />
       <StudioSidebar
         view={view}
         onViewChange={handleViewChange}
