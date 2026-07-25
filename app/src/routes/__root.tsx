@@ -15,6 +15,7 @@ import { NotFound } from "@higgsfield/quanta/not-found";
 import appCss from "../styles.css?url";
 import { appMeta, toOwnAssetUrl, type AppMeta } from "../lib/app-meta";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
+import { usePageViewTracking } from "../lib/use-analytics";
 import {
   fnfBrowserAdapter,
   getFnfScopeKey,
@@ -158,6 +159,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  usePageViewTracking();
 
   useEffect(() => {
     if (!__HF_DESIGN_INSPECTOR__) {

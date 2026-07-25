@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import type { SubmitInputFor } from "@higgsfield/fnf/client";
 import type { Generation } from "@higgsfield/fnf/client";
 import { getPreviewUrl } from "@higgsfield/fnf/client";
+import { trackGeneration, trackFeatureUse } from "@/lib/use-analytics";
 import {
   costQueryOptions,
   flattenFeedPages,
@@ -872,6 +873,7 @@ export function StudioTemplate() {
   const handleUseTemplate = (template: TemplateItem) => {
     setPrompt(`${template.title} — ${template.subtitle}`);
     setSettingValues((current) => ({ ...current, format: template.category }));
+    trackFeatureUse("use_template", { template: template.id });
   };
 
   const allowPersonalNavigation = useCallback(() => {
@@ -903,6 +905,7 @@ export function StudioTemplate() {
     // Home until the approved submit has actually created a generation.
     navigateToAllOnSubmitRef.current = runProjectId.current == null;
     const variations = parseInt(settingValues.variations ?? "1", 10);
+    trackGeneration("gpt_image_2", variations);
     void run.start(input).then((generations) => {
       if (generations.length === 0) navigateToAllOnSubmitRef.current = false;
       if (variations > 1 && generations.length > 1) {
