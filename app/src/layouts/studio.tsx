@@ -24,7 +24,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch, Grid3X3 as IconGrid } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch, Grid3X3 as IconGrid, Settings as IconSettings } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -310,6 +310,12 @@ function StudioSidebar({
               onClick={() => { window.location.href = "/analytics"; }}
               start={<Icon as={IconAnalytics} size="md" className="text-q-icon-secondary" />}
               title="Analytics"
+            />
+            <Sidebar.Item
+              selected={false}
+              onClick={() => { window.location.href = "/settings"; }}
+              start={<Icon as={IconSettings} size="md" className="text-q-icon-secondary" />}
+              title="Settings"
             />
           </Sidebar.SectionItems>
         </Sidebar.Section>
