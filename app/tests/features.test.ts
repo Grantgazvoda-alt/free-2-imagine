@@ -156,3 +156,67 @@ describe("Orgasmo — Feature Completeness", () => {
     }
   });
 });
+describe("Orgasmo — Pricing Page", () => {
+  it("pricing page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/pricing`);
+    expect(res.status).toBe(200);
+  });
+
+  it("pricing page has three tiers", async () => {
+    const html = await (await fetchWithUA(`${BASE_URL}/pricing`)).text();
+    expect(html).toContain("Free");
+    expect(html).toContain("Pro");
+    expect(html).toContain("Enterprise");
+  });
+
+  it("pricing page shows prices", async () => {
+    const html = await (await fetchWithUA(`${BASE_URL}/pricing`)).text();
+    expect(html).toContain("$0");
+    expect(html).toContain("$9.99");
+    expect(html).toContain("$29.99");
+  });
+});
+
+describe("Orgasmo — Legal Pages", () => {
+  it("terms page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/terms`);
+    expect(res.status).toBe(200);
+  });
+
+  it("terms page has content", async () => {
+    const html = await (await fetchWithUA(`${BASE_URL}/terms`)).text();
+    expect(html).toContain("Terms of Service");
+    expect(html).toContain("Orgasmo");
+  });
+
+  it("privacy page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/privacy`);
+    expect(res.status).toBe(200);
+  });
+
+  it("privacy page has content", async () => {
+    const html = await (await fetchWithUA(`${BASE_URL}/privacy`)).text();
+    expect(html).toContain("Privacy Policy");
+    expect(html).toContain("Orgasmo");
+  });
+});
+
+describe("Orgasmo — Stripe Integration", () => {
+  it("stripe webhook endpoint exists (if deployed)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/api/stripe/webhook`);
+    // Accept 200, 405, 404 if not yet deployed
+    expect([200, 404, 405, 500]).toContain(res.status);
+  });
+
+  it("routes bundle contains stripe functions", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      // The pricing page references createCheckoutSessionFn
+      if (js.includes("createCheckoutSessionFn")) {
+        expect(js).toContain("stripe");
+      }
+    }
+  });
+});

@@ -2,14 +2,14 @@
 
 **Generated:** 2026-07-26
 **Target:** https://orgasmo.higgsfield.app
-**Result:** 64/64 passed (100%)
+**Result:** 73/73 passed (100%)
 
 ## Summary
 
 | Metric | Value |
 |---|---|
-| Total Tests | 64 |
-| Passed | 64 |
+| Total Tests | 73 |
+| Passed | 73 |
 | Failed | 0 |
 | Pass Rate | 100% |
 | Test Files | 10 |
@@ -19,7 +19,7 @@
 
 | Area | Tests | Passed | Failed | Pass Rate |
 |---|---|---|---|---|
-| App | 15 | 15 | 0 | 100% |
+| App | 24 | 24 | 0 | 100% |
 | App Infrastructure | 14 | 14 | 0 | 100% |
 | Asset Availability | 2 | 2 | 0 | 100% |
 | Auth | 2 | 2 | 0 | 100% |
@@ -52,6 +52,15 @@
 | In-App Help > help feature is in the routes bundle (if deployed) | ✅ pass |
 | In-App Help > help content is in the routes bundle (if deployed) | ✅ pass |
 | Feature Completeness > routes bundle has all core features | ✅ pass |
+| Pricing Page > pricing page loads (HTTP 200) | ✅ pass |
+| Pricing Page > pricing page has three tiers | ✅ pass |
+| Pricing Page > pricing page shows prices | ✅ pass |
+| Legal Pages > terms page loads (HTTP 200) | ✅ pass |
+| Legal Pages > terms page has content | ✅ pass |
+| Legal Pages > privacy page loads (HTTP 200) | ✅ pass |
+| Legal Pages > privacy page has content | ✅ pass |
+| Stripe Integration > stripe webhook endpoint exists (if deployed) | ✅ pass |
+| Stripe Integration > routes bundle contains stripe functions | ✅ pass |
 
 ### App Infrastructure
 

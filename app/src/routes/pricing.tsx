@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Typography } from "@higgsfield/quanta/typography";
 import { Button } from "@higgsfield/quanta/button";
+import { Loader } from "@higgsfield/quanta/loader";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Check, Sparkles, Zap, Building2, HelpCircle } from "lucide-react";
 
@@ -81,6 +83,35 @@ const PLANS: PlanTier[] = [
 ];
 
 function PricingCard({ plan, index }: { plan: PlanTier; index: number }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (plan.name === "Free") {
+      window.location.href = "/";
+      return;
+    }
+    setLoading(true);
+    try {
+      const { createCheckoutSessionFn } = await import("@/lib/stripe.functions");
+      const result = await createCheckoutSessionFn({
+        data: {
+          planId: plan.name.toLowerCase() as "pro" | "enterprise",
+          successUrl: `${window.location.origin}/settings?checkout=success`,
+          cancelUrl: `${window.location.origin}/pricing`,
+        },
+      });
+      if (result.ok && result.url) {
+        window.location.href = result.url;
+      } else {
+        window.location.href = "/settings";
+      }
+    } catch {
+      window.location.href = "/settings";
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className={`relative flex flex-col gap-6 rounded-q-600 p-6 ${
@@ -139,16 +170,10 @@ function PricingCard({ plan, index }: { plan: PlanTier; index: number }) {
         variant={plan.highlighted ? "marketingPrimary" : "tertiary"}
         size="md"
         className="mt-auto w-full"
-        onClick={() => {
-          if (plan.name === "Free") {
-            window.location.href = "/";
-          } else {
-            // Future: Stripe checkout integration
-            window.location.href = "/settings";
-          }
-        }}
+        disabled={loading}
+        onClick={handleSubscribe}
       >
-        {plan.cta}
+        {loading ? <Loader size="xs" color="neutral" /> : plan.cta}
       </Button>
     </div>
   );
