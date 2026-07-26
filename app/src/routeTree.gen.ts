@@ -13,9 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiUserRouteImport } from './routes/api/user'
 import { Route as ApiMediaUploadRouteImport } from './routes/api/media/upload'
@@ -40,6 +42,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
@@ -53,6 +60,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -76,9 +88,11 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/docs': typeof DocsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
@@ -88,9 +102,11 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/docs': typeof DocsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
@@ -101,9 +117,11 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/docs': typeof DocsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
@@ -115,9 +133,11 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/docs'
     | '/pricing'
+    | '/privacy'
     | '/robots.txt'
     | '/settings'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/health'
     | '/api/user'
     | '/api/media/upload'
@@ -127,9 +147,11 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/docs'
     | '/pricing'
+    | '/privacy'
     | '/robots.txt'
     | '/settings'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/health'
     | '/api/user'
     | '/api/media/upload'
@@ -139,9 +161,11 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/docs'
     | '/pricing'
+    | '/privacy'
     | '/robots.txt'
     | '/settings'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/health'
     | '/api/user'
     | '/api/media/upload'
@@ -152,9 +176,11 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   DocsRoute: typeof DocsRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiUserRoute: typeof ApiUserRoute
   ApiMediaUploadRoute: typeof ApiMediaUploadRoute
@@ -190,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/robots.txt': {
       id: '/robots.txt'
       path: '/robots.txt'
@@ -209,6 +242,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -240,9 +280,11 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   DocsRoute: DocsRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiUserRoute: ApiUserRoute,
   ApiMediaUploadRoute: ApiMediaUploadRoute,
