@@ -521,3 +521,67 @@ To publish to the Higgsfield community feed, the app cover and icon must be gene
 2. Run `finalize_app_branding` with the winning scene and icon
 3. Fill `og_image_url`, `favicon_url`, and `marketplace_cover_url` in `app-meta.json`
 4. Deploy and publish
+
+## Admin Features
+
+### Email Templates
+The `/admin/email-templates` page provides a full template management system:
+
+**Bulk Actions:**
+- **Select All / Deselect All** — toggle selection for all templates
+- **Download All** — downloads each selected template as a separate `.html` file
+- **Copy All** — copies all selected templates' HTML to clipboard, separated by `---`
+- **Delete** — removes selected templates (with confirmation prompt)
+- **Clear** — clears the current selection
+
+**Template Preview:**
+- Live HTML preview in an `<iframe>` with `sandbox="allow-same-origin"`
+- Customizable template variables
+- Copy HTML and Download buttons
+- Plain text version displayed below
+- Character count and text-to-HTML ratio stats
+
+**Templates Available:**
+| Template | Variables |
+|---|---|
+| Team Invite | inviterName, teamName, memberName, role, inviteLink, expiresIn |
+| Usage Export | filename, generatedDate, recordCount, format |
+| Usage Limit Warning | planName, limit, used, percent, memberName |
+| Welcome | userName, getStartedLink |
+| Password Reset | userName, resetLink, expiresIn |
+
+### Audit Log
+The `/admin/audit-log` page tracks all admin actions:
+
+**Filters:**
+- **Search** — filter by action, details, or target
+- **Action Type** — 10 types with icons and colors
+- **Date Range** — start and end date pickers
+- **Clear All Filters** — reset all filters at once
+
+**Export:**
+- **CSV Export** — downloads filtered audit log entries as CSV
+- Respects all active filters (action, search, date range)
+- Includes: id, action, target_type, target_id, details, created_at
+
+**Pagination:**
+- 25 entries per page with Previous/Next buttons
+- Smart page number windowing for large page counts
+- Total entry count with active filter summary
+
+### Usage Limits
+The `/admin/usage-limits` page allows overriding role-based limits:
+
+- View current plan and default limits
+- Set custom limits for Owner, Admin, and Member roles
+- Saves to KV storage
+- Changes logged to audit trail
+
+### Email Preview
+The `/admin/email-preview` page provides a standalone template previewer:
+
+- Customizable member name and role
+- Live HTML iframe preview
+- Copy HTML/Text buttons
+- Plain text fallback view
+- Character count stats

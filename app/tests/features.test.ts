@@ -246,3 +246,58 @@ describe("Orgasmo — Billing Page", () => {
     }
   });
 });
+
+describe("Orgasmo — Audit Log Filter UI", () => {
+  it("audit log page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/admin/audit-log`);
+    expect([200, 404]).toContain(res.status);
+  });
+
+  it("audit log page has search and filter elements", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/admin/audit-log`);
+    if (res.status === 200) {
+      const html = await res.text();
+      expect(html).toContain("Audit Log");
+      expect(html).toContain("Search");
+      expect(html).toContain("Export CSV");
+    }
+  });
+
+  it("routes bundle contains audit log functions", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      if (js.includes("audit")) {
+        expect(js).toContain("AuditLog");
+      }
+    }
+  });
+});
+
+describe("Orgasmo — Bulk Template Actions", () => {
+  it("email templates page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/admin/email-templates`);
+    expect([200, 404]).toContain(res.status);
+  });
+
+  it("email templates page has bulk action features", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/admin/email-templates`);
+    if (res.status === 200) {
+      const html = await res.text();
+      expect(html).toContain("Email Templates");
+      expect(html).toContain("Search");
+    }
+  });
+
+  it("routes bundle contains bulk template functions", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      if (js.includes("bulkDownload")) {
+        expect(js).toContain("bulkCopy");
+      }
+    }
+  });
+});

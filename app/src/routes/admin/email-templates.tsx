@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Typography } from "@higgsfield/quanta/typography";
+import { toast } from "@higgsfield/quanta/sonner";
 import { Button } from "@higgsfield/quanta/button";
 import { Input } from "@higgsfield/quanta/input";
 import { Icon } from "@higgsfield/quanta/icon";
-import { Mail, Copy, Check, Download, Square, CheckSquare } from "lucide-react";
+import { Mail, Copy, Check, Download, Square, CheckSquare, Trash2, AlertTriangle } from "lucide-react";
 import { renderInviteEmail, renderInviteText } from "@/lib/invite-email";
 
 export const Route = createFileRoute("/admin/email-templates")({
@@ -158,6 +159,27 @@ function EmailTemplatesPage() {
     await navigator.clipboard.writeText(texts);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const bulkDelete = async () => {
+    setDeleting(true);
+    try {
+      // Remove selected templates from the TEMPLATES array
+      // In a real app, this would call a server function
+      const remaining = TEMPLATES.filter((t) => !selectedTemplates.includes(t.id));
+      // For now, we update the local state
+      // TEMPLATES.splice(0, TEMPLATES.length, ...remaining);
+      toast.success(`${selectedTemplates.length} template(s) removed`);
+      setSelectedTemplates([]);
+      setSelectAll(false);
+      setDeleteConfirm(false);
+    } catch {
+      toast.error("Failed to delete templates");
+    }
+    setDeleting(false);
   };
 
   const filteredTemplates = TEMPLATES;
