@@ -65,8 +65,12 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
 export async function getFnfScopeKey(): Promise<string> {
   const user = await fetchCurrentUser();
   if (user == null) return GUEST_SCOPE_KEY;
-  const workspace = await profileClient.getCurrentWorkspace().catch(() => null);
-  return `${user.id}:${workspace?.id ?? user.workspaceId ?? "personal"}`;
+  try {
+    const workspace = await profileClient.getCurrentWorkspace();
+    return `${user.id}:${workspace?.id ?? user.workspaceId ?? "personal"}`;
+  } catch {
+    return `${user.id}:${user.workspaceId ?? "personal"}`;
+  }
 }
 
 export function getSignInUrl(scopeKey: string, returnPath: string): string | null {

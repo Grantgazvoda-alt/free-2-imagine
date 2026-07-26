@@ -235,8 +235,7 @@ function latestProjectCover(
 
 function useRequiredFnfScopeKey(): string {
   const scopeKey = useFnfScopeKey();
-  if (scopeKey == null) throw new Error("Studio requires a user/workspace cache scope.");
-  return scopeKey;
+  return scopeKey ?? "guest";
 }
 
 function StudioSidebar({
