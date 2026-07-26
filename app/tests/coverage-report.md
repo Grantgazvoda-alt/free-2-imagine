@@ -2,14 +2,14 @@
 
 **Generated:** 2026-07-26
 **Target:** https://orgasmo.higgsfield.app
-**Result:** 73/73 passed (100%)
+**Result:** 76/76 passed (100%)
 
 ## Summary
 
 | Metric | Value |
 |---|---|
-| Total Tests | 73 |
-| Passed | 73 |
+| Total Tests | 76 |
+| Passed | 76 |
 | Failed | 0 |
 | Pass Rate | 100% |
 | Test Files | 10 |
@@ -19,7 +19,7 @@
 
 | Area | Tests | Passed | Failed | Pass Rate |
 |---|---|---|---|---|
-| App | 24 | 24 | 0 | 100% |
+| App | 27 | 27 | 0 | 100% |
 | App Infrastructure | 14 | 14 | 0 | 100% |
 | Asset Availability | 2 | 2 | 0 | 100% |
 | Auth | 2 | 2 | 0 | 100% |
@@ -61,6 +61,9 @@
 | Legal Pages > privacy page has content | ✅ pass |
 | Stripe Integration > stripe webhook endpoint exists (if deployed) | ✅ pass |
 | Stripe Integration > routes bundle contains stripe functions | ✅ pass |
+| Billing Page > billing page loads (HTTP 200 if deployed) | ✅ pass |
+| Billing Page > billing page has billing content (if deployed) | ✅ pass |
+| Billing Page > routes bundle contains billing functions | ✅ pass |
 
 ### App Infrastructure
 

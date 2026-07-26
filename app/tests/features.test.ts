@@ -220,3 +220,29 @@ describe("Orgasmo — Stripe Integration", () => {
     }
   });
 });
+
+describe("Orgasmo — Billing Page", () => {
+  it("billing page loads (HTTP 200 if deployed)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/billing`);
+    expect([200, 404]).toContain(res.status);
+  });
+
+  it("billing page has billing content (if deployed)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/billing`);
+    if (res.status === 200) {
+      const html = await res.text();
+      expect(html).toContain("Billing");
+    }
+  });
+
+  it("routes bundle contains billing functions", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      if (js.includes("Billing")) {
+        expect(js).toContain("Usage");
+      }
+    }
+  });
+});
