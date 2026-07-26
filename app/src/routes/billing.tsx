@@ -165,6 +165,45 @@ function BillingPage() {
               </div>
             )}
 
+            {/* Per-member breakdown */}
+            {usage.memberBreakdown && usage.memberBreakdown.length > 1 && (
+              <div className="flex flex-col gap-3 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-5">
+                <div className="flex items-center justify-between">
+                  <Typography as="h2" variant="title-sm-semi-bold" color="primary">Per-Member Usage</Typography>
+                  <Typography as="span" variant="caption-sm-regular" color="tertiary">
+                    {usage.teamMemberCount ?? 0} team members
+                  </Typography>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {usage.memberBreakdown.map((member) => {
+                    const pct = usage.totalUsed > 0 ? Math.round((member.count / usage.totalUsed) * 100) : 0;
+                    return (
+                      <div key={member.userScope} className="flex flex-col gap-1.5 rounded-q-300 bg-q-background-tertiary px-3 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-block size-2 shrink-0 rounded-full ${member.role === "owner" ? "bg-q-brand-primary" : member.role === "admin" ? "bg-amber-500" : "bg-blue-500"}`} />
+                            <Typography as="span" variant="body-sm-regular" color="primary">{member.memberName}</Typography>
+                            <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">({member.role})</Typography>
+                          </div>
+                          <Typography as="span" variant="body-sm-semi-bold" color="brand">{member.count}</Typography>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-q-background-secondary">
+                            <div className="h-full rounded-full bg-q-brand-primary" style={{ width: `${pct}%` }} />
+                          </div>
+                          <Typography as="span" variant="caption-xs-regular" color="tertiary" className="shrink-0 w-8 text-right">{pct}%</Typography>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between rounded-q-300 bg-q-background-tertiary px-3 py-2">
+                  <Typography as="span" variant="body-sm-semi-bold" color="primary">Total</Typography>
+                  <Typography as="span" variant="body-sm-semi-bold" color="brand">{usage.totalUsed}</Typography>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex flex-wrap gap-3">
               {usage.plan !== "free" && (
