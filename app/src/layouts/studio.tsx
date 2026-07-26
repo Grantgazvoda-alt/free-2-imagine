@@ -656,11 +656,30 @@ function GenerationsState({
 }
 
 export function StudioTemplate() {
-  const jobClient = useFnfJobClient<typeof STUDIO_JOBS>();
-  const mediaClient = useFnfMediaClient();
-  const scopeKey = useRequiredFnfScopeKey();
-  const queryClient = useQueryClient();
-  const run = useGenerationRun(jobClient, { scopeKey });
+  let jobClient: any;
+  let mediaClient: any;
+  let scopeKey: string;
+  let queryClient: any;
+  let run: any;
+
+  try {
+    jobClient = useFnfJobClient<typeof STUDIO_JOBS>();
+    mediaClient = useFnfMediaClient();
+    scopeKey = useRequiredFnfScopeKey();
+    queryClient = useQueryClient();
+    run = useGenerationRun(jobClient, { scopeKey });
+  } catch {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-q-background-primary px-4">
+        <div className="max-w-sm text-center">
+          <h1 className="text-q-title-md-semi-bold text-q-text-primary">Initializing...</h1>
+          <p className="mt-2 text-q-body-sm-regular text-q-text-secondary">
+            Please wait while we set up your workspace.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const [view, setView] = useState<StudioView>({ kind: "home" });
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState("freeform");
