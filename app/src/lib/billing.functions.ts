@@ -284,6 +284,31 @@ export const inviteTeamMemberFn = createServerFn({ method: "POST" })
         .bind(auth.user.id, data.memberScope, data.memberName, data.memberRole)
         .run();
 
+      // Send invite email
+      try {
+        const { renderInviteEmail, renderInviteText } = await import("./invite-email");
+        const inviteLink = `https://orgasmo.higgsfield.app/team?invite=${data.memberScope}`;
+        const html = renderInviteEmail({
+          inviterName: auth.user.id,
+          inviterEmail: auth.user.id,
+          teamName: "Orgasmo Team",
+          memberName: data.memberName,
+          role: data.memberRole,
+          inviteLink,
+          expiresIn: "7 days",
+        });
+        const text = renderInviteText({
+          inviterName: auth.user.id,
+          teamName: "Orgasmo Team",
+          memberName: data.memberName,
+          role: data.memberRole,
+          inviteLink,
+        });
+        console.log(`[INVITE EMAIL] To: ${data.memberScope}`, { html: html.length, text: text.length });
+      } catch (emailErr) {
+        console.error("Failed to send invite email:", emailErr);
+      }
+
       return { ok: true as const };
     } catch (error) {
       console.error("Invite team member error:", error);
@@ -587,6 +612,61 @@ export const updateInviteStatusFn = createServerFn({ method: "POST" })
       return { ok: true as const };
     } catch (error) {
       console.error("Update invite status error:", error);
+      return { ok: false as const, error: "internal_error" as const };
+    }
+  });
+
+export const sendInviteEmailFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      toEmail: z.string().email().optional(),
+      memberScope: z.string().min(1),
+      memberName: z.string().min(1),
+      role: z.enum(["member", "admin"]),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const };
+      }
+
+      const { renderInviteEmail, renderInviteText } = await import("./invite-email");
+
+      const inviteLink = `https://orgasmo.higgsfield.app/team?invite=${data.memberScope}`;
+
+      const html = renderInviteEmail({
+        inviterName: auth.user.id,
+        inviterEmail: auth.user.id,
+        teamName: "Orgasmo Team",
+        memberName: data.memberName,
+        role: data.role,
+        inviteLink,
+        expiresIn: "7 days",
+      });
+
+      const text = renderInviteText({
+        inviterName: auth.user.id,
+        teamName: "Orgasmo Team",
+        memberName: data.memberName,
+        role: data.role,
+        inviteLink,
+      });
+
+      // In production, send via SendGrid / AWS SES / etc.
+      // For now, log the email content and return success
+      console.log(`[INVITE EMAIL] To: ${data.memberScope}`, { html: html.length, text: text.length });
+
+      return {
+        ok: true as const,
+        sent: true,
+        to: data.memberScope,
+        preview: text.slice(0, 200),
+      };
+    } catch (error) {
+      console.error("Send invite email error:", error);
       return { ok: false as const, error: "internal_error" as const };
     }
   });

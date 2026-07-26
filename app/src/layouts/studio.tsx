@@ -5,6 +5,7 @@ import type { SubmitInputFor } from "@higgsfield/fnf/client";
 import type { Generation } from "@higgsfield/fnf/client";
 import { getPreviewUrl } from "@higgsfield/fnf/client";
 import { trackGeneration, trackFeatureUse } from "@/lib/use-analytics";
+import { checkUsageLimitFn } from "@/lib/billing.functions";
 import { AvatarStylePickerModal, AVATAR_STYLE_DEFS, getStyleByValue } from "@/components/avatar-style-picker";
 import { HelpButton, HelpModal } from "@/components/in-app-help";
 import {
@@ -1051,13 +1052,22 @@ export function StudioTemplate() {
     [allowPersonalNavigation],
   );
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!canGenerate || run.status === "submitting") return;
     if (!allowPersonalNavigation()) return;
+
+    // Check usage limit before generating
+    const limitCheck = await checkUsageLimitFn();
+    if (limitCheck.ok && !limitCheck.allowed) {
+      setSubmitError(
+        `You've used all ${limitCheck.limit} generations for your role (${limitCheck.role}). ` +
+        `Upgrade your plan or wait for the next billing period.`
+      );
+      return;
+    }
+
     setSubmitError(null);
     runProjectId.current = view.kind === "project" ? view.projectId : undefined;
-    // The host approval iframe owns confirmation. Do not navigate away from
-    // Home until the approved submit has actually created a generation.
     navigateToAllOnSubmitRef.current = runProjectId.current == null;
     const variations = parseInt(settingValues.variations ?? "1", 10);
     trackGeneration("gpt_image_2", variations);

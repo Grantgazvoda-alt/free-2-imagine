@@ -9,10 +9,10 @@ import { Icon } from "@higgsfield/quanta/icon";
 import { toast } from "@higgsfield/quanta/sonner";
 import {
   Users, UserPlus, UserMinus, Send, Check, X, RefreshCw,
-  ArrowRight, ArrowLeft, Clock, Shield,
+  ArrowRight, ArrowLeft, Clock, Shield, Zap,
 } from "lucide-react";
 import {
-  getTeamMembersFn, inviteTeamMemberFn, updateInviteStatusFn,
+  getTeamMembersFn, inviteTeamMemberFn, updateInviteStatusFn, getUsageStatsFn,
 } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/team")({
@@ -50,6 +50,13 @@ function TeamPage() {
     queryFn: () => getTeamMembersFn(),
     refetchOnWindowFocus: false,
     staleTime: 10_000,
+  });
+
+  const { data: usageData } = useQuery({
+    queryKey: ["team", "usage"],
+    queryFn: () => getUsageStatsFn(),
+    refetchOnWindowFocus: false,
+    staleTime: 15_000,
   });
 
   const handleInvite = async () => {
@@ -139,6 +146,55 @@ function TeamPage() {
                 <Typography as="span" variant="display-md-bold" color="primary">{members.length}</Typography>
               </div>
             </div>
+
+            {/* Team Usage Stats */}
+            {usageData?.ok && usageData.usage && (
+              <div className="flex flex-col gap-3 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-5">
+                <div className="flex items-center gap-3">
+                  <Icon as={Zap} size="md" className="text-q-text-tertiary" />
+                  <Typography as="h2" variant="title-sm-semi-bold" color="primary">Team Usage</Typography>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="flex flex-col gap-0.5">
+                    <Typography as="span" variant="caption-sm-regular" color="tertiary">Total Generations</Typography>
+                    <Typography as="span" variant="display-sm-bold" color="primary">{usageData.usage.totalUsed}</Typography>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <Typography as="span" variant="caption-sm-regular" color="tertiary">Monthly Limit</Typography>
+                    <Typography as="span" variant="display-sm-bold" color="primary">{usageData.usage.monthlyLimit}</Typography>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <Typography as="span" variant="caption-sm-regular" color="tertiary">Remaining</Typography>
+                    <Typography as="span" variant="display-sm-bold" color="primary">{usageData.usage.remaining}</Typography>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <Typography as="span" variant="caption-sm-regular" color="tertiary">Plan</Typography>
+                    <Typography as="span" variant="display-sm-bold" color="primary" className="capitalize">{usageData.usage.plan}</Typography>
+                  </div>
+                </div>
+                {usageData.usage.memberBreakdown && usageData.usage.memberBreakdown.length > 1 && (
+                  <div className="flex flex-col gap-2 mt-2">
+                    <Typography as="span" variant="caption-sm-regular" color="tertiary">Per Member</Typography>
+                    {usageData.usage.memberBreakdown.map((member) => {
+                      const pct = usageData.usage.totalUsed > 0 ? Math.round((member.count / usageData.usage.totalUsed) * 100) : 0;
+                      return (
+                        <div key={member.userScope} className="flex items-center justify-between rounded-q-300 bg-q-background-tertiary px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-block size-2 shrink-0 rounded-full ${member.role === "owner" ? "bg-q-brand-primary" : member.role === "admin" ? "bg-amber-500" : "bg-blue-500"}`} />
+                            <Typography as="span" variant="body-sm-regular" color="primary">{member.memberName}</Typography>
+                            <Typography as="span" variant="caption-xs-regular" color="tertiary">({member.role})</Typography>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Typography as="span" variant="body-sm-semi-bold" color="brand">{member.count}</Typography>
+                            <Typography as="span" variant="caption-xs-regular" color="tertiary" className="w-8 text-right">{pct}%</Typography>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Invite form */}
             {inviteOpen && (
