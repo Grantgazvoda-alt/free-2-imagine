@@ -63,11 +63,10 @@ function AuditLogPage() {
     }),
     refetchOnWindowFocus: false,
     staleTime: 10_000,
-    keepPreviousData: true,
   });
 
-  const entries = data?.ok ? data.entries : [];
-  const total = data?.ok ? (data as any).total ?? 0 : 0;
+  const entries = (data as any)?.ok ? (data as any).entries : [];
+  const total = (data as any)?.ok ? (data as any).total ?? 0 : 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
