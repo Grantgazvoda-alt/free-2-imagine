@@ -158,6 +158,13 @@ export const getUsageStatsFn = createServerFn({ method: "POST" }).handler(async 
     const used = totalUsed?.count ?? 0;
     const remaining = Math.max(0, limit - used);
 
+    // Role-based limits: admins get 60% of plan, members get 40%
+    const roleLimits = {
+      owner: { limit: limit, label: "Full access" },
+      admin: { limit: Math.ceil(limit * 0.6), label: "60% of plan" },
+      member: { limit: Math.ceil(limit * 0.4), label: "40% of plan" },
+    };
+
     return {
       ok: true as const,
       usage: {
@@ -172,6 +179,7 @@ export const getUsageStatsFn = createServerFn({ method: "POST" }).handler(async 
         usageByModel: usageByModel.results ?? [],
         memberBreakdown,
         teamMemberCount: teamMembers.results.length,
+        roleLimits,
       },
     };
   } catch (error) {
@@ -309,6 +317,79 @@ export const removeTeamMemberFn = createServerFn({ method: "POST" })
       return { ok: true as const };
     } catch (error) {
       console.error("Remove team member error:", error);
+      return { ok: false as const, error: "internal_error" as const };
+    }
+  });
+export const exportUsageFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      format: z.enum(["csv", "json"]).default("csv"),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const };
+      }
+
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const };
+      }
+
+      const userScope = auth.user.id;
+
+      // Get all team scopes
+      const teamMembers = await db
+        .prepare(
+          "SELECT member_scope, member_name FROM team_members WHERE team_owner_scope = ? AND status = 'active'",
+        )
+        .bind(userScope)
+        .all() as unknown as { results: { member_scope: string; member_name: string }[] };
+
+      const scopes = [userScope, ...teamMembers.results.map((m) => m.member_scope)];
+      const placeholders = scopes.map(() => "?").join(",");
+
+      const rows = await db
+        .prepare(
+          `SELECT ul.user_scope, ul.member_name, ul.model, ul.credits_consumed, ul.created_at
+           FROM usage_ledger ul
+           WHERE ul.user_scope IN (${placeholders})
+           ORDER BY ul.created_at DESC
+           LIMIT 10000`,
+        )
+        .bind(...scopes)
+        .all() as unknown as {
+        results: { user_scope: string; member_name: string | null; model: string; credits_consumed: number; created_at: string }[];
+      };
+
+      if (data.format === "json") {
+        const exportData = {
+          exportedAt: new Date().toISOString(),
+          totalRecords: rows.results.length,
+          usage: rows.results.map((r) => ({
+            userScope: r.user_scope,
+            memberName: r.member_name ?? "Unknown",
+            model: r.model,
+            credits: r.credits_consumed,
+            date: r.created_at,
+          })),
+        };
+        return { ok: true as const, data: JSON.stringify(exportData, null, 2), format: "json" as const };
+      }
+
+      // CSV format
+      const header = "user_scope,member_name,model,credits_consumed,created_at";
+      const csvRows = rows.results.map((r) =>
+        `"${r.user_scope}","${r.member_name ?? "Unknown"}","${r.model}",${r.credits_consumed},"${r.created_at}"`,
+      );
+      const csv = [header, ...csvRows].join("\n");
+      return { ok: true as const, data: csv, format: "csv" as const };
+    } catch (error) {
+      console.error("Export usage error:", error);
       return { ok: false as const, error: "internal_error" as const };
     }
   });
