@@ -393,3 +393,200 @@ export const exportUsageFn = createServerFn({ method: "POST" })
       return { ok: false as const, error: "internal_error" as const };
     }
   });
+
+export const checkUsageLimitFn = createServerFn({ method: "POST" }).handler(async () => {
+  try {
+    const { requireCurrentUser } = await import("./auth.server");
+    const auth = await requireCurrentUser();
+    if (!auth.ok) {
+      return { ok: false as const, allowed: false, reason: "unauthorized" as const };
+    }
+
+    const { bindings } = await import("./bindings.server");
+    const db = bindings().DB;
+    if (!db) {
+      return { ok: false as const, allowed: true, reason: "db_unavailable" as const };
+    }
+
+    const userScope = auth.user.id;
+
+    // Check if this user is a team member
+    const teamMembership = await db
+      .prepare(
+        "SELECT team_owner_scope, member_role FROM team_members WHERE member_scope = ? AND status = 'active'",
+      )
+      .bind(userScope)
+      .first<{ team_owner_scope: string; member_role: string }>();
+
+    let role = "owner";
+    let ownerScope = userScope;
+
+    if (teamMembership) {
+      role = teamMembership.member_role;
+      ownerScope = teamMembership.team_owner_scope;
+    }
+
+    // Get the plan and limits
+    const sub = await db
+      .prepare("SELECT plan_id, credits_remaining FROM subscriptions WHERE user_scope = ?")
+      .bind(ownerScope)
+      .first<{ plan_id: string; credits_remaining: number }>();
+
+    const plan = sub?.plan_id ?? "free";
+    const planLimits: Record<string, number> = { free: 10, pro: 100, enterprise: 500 };
+    const planLimit = planLimits[plan] ?? 10;
+
+    // Role-based limit
+    const roleMultiplier = role === "owner" ? 1.0 : role === "admin" ? 0.6 : 0.4;
+    const roleLimit = Math.ceil(planLimit * roleMultiplier);
+
+    // Count current usage for this user
+    const currentUsage = await db
+      .prepare("SELECT COUNT(*) as count FROM usage_ledger WHERE user_scope = ?")
+      .bind(userScope)
+      .first<{ count: number }>();
+
+    const used = currentUsage?.count ?? 0;
+    const remaining = Math.max(0, roleLimit - used);
+
+    return {
+      ok: true as const,
+      allowed: remaining > 0,
+      remaining,
+      limit: roleLimit,
+      used,
+      role,
+      plan,
+    };
+  } catch (error) {
+    console.error("Check usage limit error:", error);
+    return { ok: false as const, allowed: true, reason: "internal_error" as const };
+  }
+});
+
+export const getTeamMembersFn = createServerFn({ method: "POST" }).handler(async () => {
+  try {
+    const { requireCurrentUser } = await import("./auth.server");
+    const auth = await requireCurrentUser();
+    if (!auth.ok) {
+      return { ok: false as const, error: "unauthorized" as const, members: [] };
+    }
+
+    const { bindings } = await import("./bindings.server");
+    const db = bindings().DB;
+    if (!db) {
+      return { ok: false as const, error: "db_unavailable" as const, members: [] };
+    }
+
+    // Get members where current user is the owner
+    const owned = await db
+      .prepare(
+        `SELECT id, member_scope, member_name, member_role, status, invited_at, joined_at
+         FROM team_members WHERE team_owner_scope = ? ORDER BY invited_at DESC`,
+      )
+      .bind(auth.user.id)
+      .all() as unknown as {
+      results: { id: number; member_scope: string; member_name: string; member_role: string; status: string; invited_at: string; joined_at: string | null }[];
+    };
+
+    // Also check if current user is a member of any team
+    const membership = await db
+      .prepare(
+        `SELECT tm.id, tm.team_owner_scope, tm.member_name, tm.member_role, tm.status, tm.invited_at, tm.joined_at
+         FROM team_members tm WHERE tm.member_scope = ? ORDER BY tm.invited_at DESC`,
+      )
+      .bind(auth.user.id)
+      .all() as unknown as {
+      results: { id: number; team_owner_scope: string; member_name: string; member_role: string; status: string; invited_at: string; joined_at: string | null }[];
+    };
+
+    return {
+      ok: true as const,
+      members: [
+        ...owned.results.map((m) => ({
+          id: m.id,
+          scope: m.member_scope,
+          name: m.member_name,
+          role: m.member_role,
+          status: m.status,
+          invitedAt: m.invited_at,
+          joinedAt: m.joined_at,
+          direction: "outgoing" as const,
+        })),
+        ...membership.results.map((m) => ({
+          id: m.id,
+          scope: m.team_owner_scope,
+          name: m.member_name,
+          role: m.member_role,
+          status: m.status,
+          invitedAt: m.invited_at,
+          joinedAt: m.joined_at,
+          direction: "incoming" as const,
+        })),
+      ],
+    };
+  } catch (error) {
+    console.error("Get team members error:", error);
+    return { ok: false as const, error: "internal_error" as const, members: [] };
+  }
+});
+
+export const updateInviteStatusFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      memberId: z.number().int(),
+      action: z.enum(["accept", "decline", "cancel", "resend"]),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const };
+      }
+
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const };
+      }
+
+      switch (data.action) {
+        case "accept":
+          await db
+            .prepare(
+              "UPDATE team_members SET status = 'active', joined_at = datetime('now') WHERE id = ? AND member_scope = ?",
+            )
+            .bind(data.memberId, auth.user.id)
+            .run();
+          break;
+        case "decline":
+          await db
+            .prepare("DELETE FROM team_members WHERE id = ? AND member_scope = ?")
+            .bind(data.memberId, auth.user.id)
+            .run();
+          break;
+        case "cancel":
+          await db
+            .prepare("DELETE FROM team_members WHERE id = ? AND team_owner_scope = ?")
+            .bind(data.memberId, auth.user.id)
+            .run();
+          break;
+        case "resend":
+          // Re-activate a cancelled/declined invite
+          await db
+            .prepare(
+              "UPDATE team_members SET status = 'active', invited_at = datetime('now') WHERE id = ? AND team_owner_scope = ?",
+            )
+            .bind(data.memberId, auth.user.id)
+            .run();
+          break;
+      }
+
+      return { ok: true as const };
+    } catch (error) {
+      console.error("Update invite status error:", error);
+      return { ok: false as const, error: "internal_error" as const };
+    }
+  });

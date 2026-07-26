@@ -25,7 +25,7 @@ import {
   PanelLeftClose as IconSidebarHiddenLeftWideOutlined,
   PanelLeftOpen as IconSidebarVisibleLeftWideOutlined,
 } from "lucide-react";
-import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch, Grid3X3 as IconGrid, Settings as IconSettings, DollarSign as IconPricing, CreditCard as IconBilling } from "lucide-react";
+import { Maximize as IconAspectRatio, Paintbrush as IconStyle, CopyPlus as IconLayers, BarChart3 as IconAnalytics, UserRound as IconAvatar, Shuffle as IconBatch, Grid3X3 as IconGrid, Settings as IconSettings, DollarSign as IconPricing, CreditCard as IconBilling, Users as IconTeam } from "lucide-react";
 import { House as IconHomeFilled, Images as IconImagesFilled } from "@phosphor-icons/react";
 import { Icon } from "@higgsfield/quanta/icon";
 import { Button } from "@higgsfield/quanta/button";
@@ -329,6 +329,12 @@ function StudioSidebar({
               onClick={() => { window.location.href = "/billing"; }}
               start={<Icon as={IconBilling} size="md" className="text-q-icon-secondary" />}
               title="Billing"
+            />
+            <Sidebar.Item
+              selected={false}
+              onClick={() => { window.location.href = "/team"; }}
+              start={<Icon as={IconTeam} size="md" className="text-q-icon-secondary" />}
+              title="Team"
             />
           </Sidebar.SectionItems>
         </Sidebar.Section>
