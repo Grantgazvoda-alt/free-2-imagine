@@ -3,12 +3,12 @@ import { z } from "zod";
 
 const PLANS: Record<string, { priceId: string; credits: number; name: string }> = {
   pro: {
-    priceId: "price_pro_monthly", // Replace with actual Stripe price ID
+    priceId: process.env.STRIPE_PRICE_PRO ?? "price_pro_monthly",
     credits: 100,
     name: "Pro",
   },
   enterprise: {
-    priceId: "price_enterprise_monthly", // Replace with actual Stripe price ID
+    priceId: process.env.STRIPE_PRICE_ENTERPRISE ?? "price_enterprise_monthly",
     credits: 500,
     name: "Enterprise",
   },

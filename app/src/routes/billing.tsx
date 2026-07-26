@@ -11,7 +11,7 @@ import {
   CreditCard, Sparkles, BarChart3, ExternalLink, RefreshCw, Zap, Clock,
   UserPlus, Download, FileText, FileSpreadsheet, Users, Shield,
 } from "lucide-react";
-import { getUsageStatsFn, getBillingPortalUrlFn, inviteTeamMemberFn, removeTeamMemberFn, exportUsageFn } from "@/lib/billing.functions";
+import { getUsageStatsFn, getBillingPortalUrlFn, inviteTeamMemberFn, removeTeamMemberFn, exportUsageFn, exportUsageAndEmailFn } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/billing")({
   component: BillingPage,
@@ -102,6 +102,30 @@ function BillingPage() {
       }
     } catch {}
     setExportLoading(false);
+  };
+
+  const [emailExportOpen, setEmailExportOpen] = useState(false);
+  const [emailExportAddr, setEmailExportAddr] = useState("");
+  const [emailExportFormat, setEmailExportFormat] = useState<"csv" | "json">("csv");
+  const [emailExportSending, setEmailExportSending] = useState(false);
+
+  const handleEmailExport = async () => {
+    if (!emailExportAddr.trim()) return;
+    setEmailExportSending(true);
+    try {
+      const result = await exportUsageAndEmailFn({
+        data: { format: emailExportFormat, toEmail: emailExportAddr.trim() },
+      });
+      if (result.ok) {
+        toast.success(`Export sent via ${result.provider}`);
+        setEmailExportOpen(false);
+      } else {
+        toast.error("Failed to send export");
+      }
+    } catch {
+      toast.error("Failed to send export");
+    }
+    setEmailExportSending(false);
   };
 
   const handleInvite = async () => {
@@ -356,13 +380,48 @@ function BillingPage() {
               <Button variant="tertiary" size="sm" onClick={() => window.location.href = "/pricing"} start={<Icon as={Sparkles} size="sm" />}>
                 {usage.plan === "free" ? "Upgrade Plan" : "Change Plan"}
               </Button>
+              <Button variant="tertiary" size="sm" onClick={() => setEmailExportOpen(true)} start={<Icon as={Mail} size="sm" />}>
+                Email Export
+              </Button>
               <Button variant="tertiary" size="sm" onClick={() => handleExport("csv")} disabled={exportLoading} start={<Icon as={FileSpreadsheet} size="sm" />}>
                 Export CSV
               </Button>
               <Button variant="tertiary" size="sm" onClick={() => handleExport("json")} disabled={exportLoading} start={<Icon as={FileText} size="sm" />}>
                 Export JSON
               </Button>
+              <Button variant="tertiary" size="sm" onClick={() => window.location.href = "/admin/usage-limits"} start={<Icon as={Settings} size="sm" />}>
+                Manage Limits
+              </Button>
+              <Button variant="tertiary" size="sm" onClick={() => window.location.href = "/admin/email-preview"} start={<Icon as={Mail} size="sm" />}>
+                Email Preview
+              </Button>
             </div>
+
+            {/* Email Export Modal */}
+            {emailExportOpen && (
+              <div className="flex flex-col gap-4 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-5">
+                <Typography as="h2" variant="title-sm-semi-bold" color="primary">Email Usage Export</Typography>
+                <div className="flex flex-col gap-3">
+                  <Input
+                    value={emailExportAddr}
+                    onChange={(e) => setEmailExportAddr(e.target.value)}
+                    placeholder="email@example.com"
+                    label="Email Address"
+                    type="email"
+                  />
+                  <div className="flex gap-2">
+                    <Button variant={emailExportFormat === "csv" ? "primary" : "tertiary"} size="sm" onClick={() => setEmailExportFormat("csv")}>CSV</Button>
+                    <Button variant={emailExportFormat === "json" ? "primary" : "tertiary"} size="sm" onClick={() => setEmailExportFormat("json")}>JSON</Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleEmailExport} disabled={emailExportSending || !emailExportAddr.trim()}>
+                      {emailExportSending ? "Sending..." : "Send Export"}
+                    </Button>
+                    <Button variant="tertiary" onClick={() => setEmailExportOpen(false)}>Cancel</Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -662,3 +662,153 @@ export const sendInviteEmailFn = createServerFn({ method: "POST" })
       return { ok: false as const, error: "internal_error" as const };
     }
   });
+
+export const updateUsageLimitsFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      memberScope: z.string().min(1),
+      ownerLimit: z.number().int().min(1).max(10000).optional(),
+      adminLimit: z.number().int().min(1).max(10000).optional(),
+      memberLimit: z.number().int().min(1).max(10000).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const };
+      }
+
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const };
+      }
+
+      // Store custom limits in a metadata table or kv
+      const { env } = await import("cloudflare:workers");
+      const kv = (env as any).KV;
+
+      if (kv) {
+        const key = `usage_limits:${data.memberScope}`;
+        const limits: Record<string, number> = {};
+        if (data.ownerLimit) limits.owner = data.ownerLimit;
+        if (data.adminLimit) limits.admin = data.adminLimit;
+        if (data.memberLimit) limits.member = data.memberLimit;
+        await kv.put(key, JSON.stringify(limits));
+      }
+
+      // Also update the subscription if this is the owner
+      if (data.ownerLimit) {
+        await db
+          .prepare("UPDATE subscriptions SET credits_total = ?, updated_at = datetime('now') WHERE user_scope = ?")
+          .bind(data.ownerLimit, data.memberScope)
+          .run();
+      }
+
+      return { ok: true as const };
+    } catch (error) {
+      console.error("Update usage limits error:", error);
+      return { ok: false as const, error: "internal_error" as const };
+    }
+  });
+
+export const getUsageLimitsFn = createServerFn({ method: "POST" })
+  .validator(z.object({ memberScope: z.string().min(1).optional() }).optional())
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const, limits: null };
+      }
+
+      const scope = data?.memberScope ?? auth.user.id;
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      const { env } = await import("cloudflare:workers");
+      const kv = (env as any).KV;
+
+      // Get plan default
+      const sub = await db
+        .prepare("SELECT plan_id, credits_total FROM subscriptions WHERE user_scope = ?")
+        .bind(scope)
+        .first<{ plan_id: string; credits_total: number }>();
+
+      const plan = sub?.plan_id ?? "free";
+      const planLimits: Record<string, number> = { free: 10, pro: 100, enterprise: 500 };
+      const defaultPlanLimit = planLimits[plan] ?? 10;
+
+      // Get custom limits from KV
+      let customLimits: Record<string, number> = {};
+      if (kv) {
+        const stored = await kv.get(`usage_limits:${scope}`);
+        if (stored) {
+          try { customLimits = JSON.parse(stored); } catch {}
+        }
+      }
+
+      return {
+        ok: true as const,
+        limits: {
+          plan,
+          defaultLimit: sub?.credits_total ?? defaultPlanLimit,
+          owner: customLimits.owner ?? sub?.credits_total ?? defaultPlanLimit,
+          admin: customLimits.admin ?? Math.ceil((sub?.credits_total ?? defaultPlanLimit) * 0.6),
+          member: customLimits.member ?? Math.ceil((sub?.credits_total ?? defaultPlanLimit) * 0.4),
+          isCustom: Object.keys(customLimits).length > 0,
+        },
+      };
+    } catch (error) {
+      console.error("Get usage limits error:", error);
+      return { ok: false as const, error: "internal_error" as const, limits: null };
+    }
+  });
+
+export const exportUsageAndEmailFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      format: z.enum(["csv", "json"]).default("csv"),
+      toEmail: z.string().email(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const };
+      }
+
+      // Get the export data
+      const { exportUsageFn } = await import("./billing.functions");
+      const exportResult = await exportUsageFn({ data: { format: data.format } });
+      if (!exportResult.ok) {
+        return { ok: false as const, error: "export_failed" as const };
+      }
+
+      const filename = `orgasmo-usage-${new Date().toISOString().split("T")[0]}.${data.format}`;
+      const mime = data.format === "csv" ? "text/csv" : "application/json";
+
+      // Send via email provider
+      const { sendEmail } = await import("./email.server");
+      const result = await sendEmail({
+        to: data.toEmail,
+        subject: `Orgasmo Usage Export — ${filename}`,
+        html: `<p>Your Orgasmo usage data is attached.</p><p>File: ${filename}</p><p>Generated: ${new Date().toISOString()}</p>`,
+        text: `Your Orgasmo usage data is attached.\nFile: ${filename}\nGenerated: ${new Date().toISOString()}`,
+      });
+
+      return {
+        ok: true as const,
+        provider: result.provider,
+        messageId: result.messageId,
+        filename,
+        size: exportResult.data.length,
+      };
+    } catch (error) {
+      console.error("Export and email error:", error);
+      return { ok: false as const, error: "internal_error" as const };
+    }
+  });

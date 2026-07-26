@@ -20,6 +20,8 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AdminEmailPreviewRouteImport } from './routes/admin/email-preview'
+import { Route as AdminUsageLimitsRouteImport } from './routes/admin/usage-limits'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiUserRouteImport } from './routes/api/user'
 import { Route as ApiMediaUploadRouteImport } from './routes/api/media/upload'
@@ -80,6 +82,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEmailPreviewRoute = AdminEmailPreviewRouteImport.update({
+  id: '/admin/email-preview',
+  path: '/admin/email-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsageLimitsRoute = AdminUsageLimitsRouteImport.update({
+  id: '/admin/usage-limits',
+  path: '/admin/usage-limits',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
@@ -113,6 +125,8 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/admin/email-preview': typeof AdminEmailPreviewRoute
+  '/admin/usage-limits': typeof AdminUsageLimitsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
@@ -130,6 +144,8 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/admin/email-preview': typeof AdminEmailPreviewRoute
+  '/admin/usage-limits': typeof AdminUsageLimitsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
@@ -148,6 +164,8 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/admin/email-preview': typeof AdminEmailPreviewRoute
+  '/admin/usage-limits': typeof AdminUsageLimitsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
   '/api/media/upload': typeof ApiMediaUploadRoute
@@ -167,6 +185,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
+    | '/admin/email-preview'
+    | '/admin/usage-limits'
     | '/api/health'
     | '/api/user'
     | '/api/media/upload'
@@ -184,6 +204,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
+    | '/admin/email-preview'
+    | '/admin/usage-limits'
     | '/api/health'
     | '/api/user'
     | '/api/media/upload'
@@ -201,6 +223,8 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
+    | '/admin/email-preview'
+    | '/admin/usage-limits'
     | '/api/health'
     | '/api/user'
     | '/api/media/upload'
@@ -219,6 +243,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  AdminEmailPreviewRoute: typeof AdminEmailPreviewRoute
+  AdminUsageLimitsRoute: typeof AdminUsageLimitsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiUserRoute: typeof ApiUserRoute
   ApiMediaUploadRoute: typeof ApiMediaUploadRoute
@@ -304,6 +330,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/email-preview': {
+      id: '/admin/email-preview'
+      path: '/admin/email-preview'
+      fullPath: '/admin/email-preview'
+      preLoaderRoute: typeof AdminEmailPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/usage-limits': {
+      id: '/admin/usage-limits'
+      path: '/admin/usage-limits'
+      fullPath: '/admin/usage-limits'
+      preLoaderRoute: typeof AdminUsageLimitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
@@ -347,6 +387,8 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  AdminEmailPreviewRoute: AdminEmailPreviewRoute,
+  AdminUsageLimitsRoute: AdminUsageLimitsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiUserRoute: ApiUserRoute,
   ApiMediaUploadRoute: ApiMediaUploadRoute,
