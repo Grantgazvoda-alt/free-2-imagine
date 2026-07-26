@@ -150,7 +150,7 @@ function EmailTemplatesPage() {
             <Button
               key={t.id}
               variant={selectedTemplate === t.id ? "primary" : "tertiary"}
-              size="sm"
+              
               onClick={() => { setSelectedTemplate(t.id); setVariables({}); }}
             >
               {t.name}
@@ -167,10 +167,10 @@ function EmailTemplatesPage() {
                 <Typography as="p" variant="body-sm-regular" color="tertiary">{template.description}</Typography>
               </div>
               <div className="flex gap-2">
-                <Button variant="tertiary" size="xs" onClick={copyHtml} start={<Icon as={copied ? Check : Copy} size="sm" />}>
+                <Button variant="tertiary" size="xs" onClick={copyHtml} start={<Icon as={copied ? Check : Copy}  />}>
                   {copied ? "Copied" : "Copy"}
                 </Button>
-                <Button variant="tertiary" size="xs" onClick={downloadHtml} start={<Icon as={Download} size="sm" />}>
+                <Button variant="tertiary" size="xs" onClick={downloadHtml} start={<Icon as={Download}  />}>
                   Download
                 </Button>
               </div>
@@ -203,7 +203,7 @@ function EmailTemplatesPage() {
                       value={variables[v] ?? ""}
                       onChange={(e) => setVariables((prev) => ({ ...prev, [v]: e.target.value }))}
                       placeholder={v}
-                      size="sm"
+                      
                     />
                   </div>
                 ))}

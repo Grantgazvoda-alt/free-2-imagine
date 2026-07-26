@@ -858,7 +858,7 @@ export const exportUsageAndEmailFn = createServerFn({ method: "POST" })
         provider: result.provider,
         messageId: result.messageId,
         filename,
-        size: exportResult.data.length,
+        size: exportData.length,
       };
     } catch (error) {
       console.error("Export and email error:", error);
