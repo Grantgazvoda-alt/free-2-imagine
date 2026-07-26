@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Typography } from "@higgsfield/quanta/typography";
 import { Button } from "@higgsfield/quanta/button";
 import { Input } from "@higgsfield/quanta/input";
 import { Icon } from "@higgsfield/quanta/icon";
-import { Mail, Eye, Copy, Check, Download, FileText } from "lucide-react";
+import { Mail, Eye, Copy, Check, Download, FileText, Search, Filter } from "lucide-react";
 import { renderInviteEmail, renderInviteText } from "@/lib/invite-email";
 
 export const Route = createFileRoute("/admin/email-templates")({
@@ -21,6 +21,7 @@ interface TemplateDef {
   id: string;
   name: string;
   description: string;
+  category: string;
   variables: string[];
   preview: (vars: Record<string, string>) => { html: string; text: string };
 }
@@ -30,6 +31,7 @@ const TEMPLATES: TemplateDef[] = [
     id: "team-invite",
     name: "Team Invite",
     description: "Sent when a team member is invited to join",
+    category: "notifications",
     variables: ["inviterName", "teamName", "memberName", "role", "inviteLink", "expiresIn"],
     preview: (vars) => {
       const html = renderInviteEmail({
@@ -55,6 +57,7 @@ const TEMPLATES: TemplateDef[] = [
     id: "usage-export",
     name: "Usage Export",
     description: "Sent when usage data is exported via email",
+    category: "reports",
     variables: ["filename", "generatedDate", "recordCount", "format"],
     preview: (vars) => {
       const filename = vars.filename || "orgasmo-usage-2026-07-25.csv";
@@ -65,7 +68,7 @@ const TEMPLATES: TemplateDef[] = [
         <div style="font-size: 24px; font-weight: 700; color: #a3e635; margin-bottom: 4px;">Orgasmo</div>
         <div style="color: #71717a; font-size: 14px; margin-bottom: 24px;">AI Image Generation</div>
         <h1 style="font-size: 20px; color: #fff; margin: 0 0 8px;">Usage Export Ready</h1>
-        <p style="color: #a1a1aa; font-size: 15px; line-height: 1.5;">Your usage data has been exported. See attached file for details.</p>
+        <p style="color: #a1a1aa; font-size: 15px; line-height: 1.5;">Your usage data has been exported.</p>
         <div style="background: #12121f; border-radius: 8px; padding: 16px; margin: 16px 0;">
           <dl>
             <dt style="color: #71717a; font-size: 12px; text-transform: uppercase; margin-bottom: 2px;">File</dt>
@@ -85,9 +88,10 @@ const TEMPLATES: TemplateDef[] = [
     },
   },
   {
-    id: "usage-limit",
+    id: "usage-limit-warning",
     name: "Usage Limit Warning",
     description: "Sent when approaching or exceeding usage limits",
+    category: "alerts",
     variables: ["planName", "limit", "used", "percent", "memberName"],
     preview: (vars) => {
       const pct = vars.percent || "85";
@@ -110,12 +114,63 @@ const TEMPLATES: TemplateDef[] = [
       return { html, text };
     },
   },
+  {
+    id: "welcome",
+    name: "Welcome",
+    description: "Sent to new users after sign-up",
+    category: "onboarding",
+    variables: ["userName", "getStartedLink"],
+    preview: (vars) => {
+      const html = `<div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #0a0a0f; color: #e4e4e7; border-radius: 12px;">
+        <div style="font-size: 24px; font-weight: 700; color: #a3e635; margin-bottom: 4px;">Orgasmo</div>
+        <div style="color: #71717a; font-size: 14px; margin-bottom: 24px;">AI Image Generation</div>
+        <h1 style="font-size: 20px; color: #fff; margin: 0 0 8px;">Welcome to Orgasmo, ${vars.userName || "Creator"}!</h1>
+        <p style="color: #a1a1aa; font-size: 15px; line-height: 1.5;">Start generating stunning images with AI. No rules, no limits.</p>
+        <a href="${vars.getStartedLink || "https://orgasmo.higgsfield.app"}" style="display: inline-block; background: #a3e635; color: #0a0a0f; font-weight: 600; padding: 12px 32px; border-radius: 8px; text-decoration: none; margin: 16px 0;">Get Started</a>
+      </div>`;
+      const text = `Welcome to Orgasmo, ${vars.userName || "Creator"}!\n\nStart generating stunning images with AI.\n\nGet started: ${vars.getStartedLink || "https://orgasmo.higgsfield.app"}`;
+      return { html, text };
+    },
+  },
+  {
+    id: "password-reset",
+    name: "Password Reset",
+    description: "Sent when a user requests a password reset",
+    category: "auth",
+    variables: ["userName", "resetLink", "expiresIn"],
+    preview: (vars) => {
+      const html = `<div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background: #0a0a0f; color: #e4e4e7; border-radius: 12px;">
+        <div style="font-size: 24px; font-weight: 700; color: #a3e635; margin-bottom: 4px;">Orgasmo</div>
+        <div style="color: #71717a; font-size: 14px; margin-bottom: 24px;">AI Image Generation</div>
+        <h1 style="font-size: 20px; color: #fff; margin: 0 0 8px;">Reset Your Password</h1>
+        <p style="color: #a1a1aa; font-size: 15px; line-height: 1.5;">Click the link below to reset your password. This link expires in ${vars.expiresIn || "1 hour"}.</p>
+        <a href="${vars.resetLink || "https://orgasmo.higgsfield.app/auth/reset"}" style="display: inline-block; background: #a3e635; color: #0a0a0f; font-weight: 600; padding: 12px 32px; border-radius: 8px; text-decoration: none; margin: 16px 0;">Reset Password</a>
+      </div>`;
+      const text = `Reset Your Password\n\nClick the link below to reset your password. This link expires in ${vars.expiresIn || "1 hour"}.\n\n${vars.resetLink || "https://orgasmo.higgsfield.app/auth/reset"}`;
+      return { html, text };
+    },
+  },
 ];
 
 function EmailTemplatesPage() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0].id);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
+
+  const categories = [...new Set(TEMPLATES.map((t) => t.category))];
+
+  const filteredTemplates = useMemo(() => {
+    return TEMPLATES.filter((t) => {
+      if (categoryFilter && t.category !== categoryFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.id.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [searchQuery, categoryFilter]);
 
   const template = TEMPLATES.find((t) => t.id === selectedTemplate) ?? TEMPLATES[0];
   const preview = template.preview(variables);
@@ -144,81 +199,113 @@ function EmailTemplatesPage() {
           <Typography as="h1" variant="headline-md-semi-bold" color="primary">Email Templates</Typography>
         </div>
 
-        {/* Template selector */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {TEMPLATES.map((t) => (
-            <Button
-              key={t.id}
-              variant={selectedTemplate === t.id ? "primary" : "tertiary"}
-              
-              onClick={() => { setSelectedTemplate(t.id); setVariables({}); }}
-            >
-              {t.name}
-            </Button>
-          ))}
+        {/* Search */}
+        <div className="relative">
+          <Icon as={Search} size="sm" className="absolute left-3 top-1/2 -translate-y-1/2 text-q-text-tertiary" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search templates by name, description, or ID..."
+            className="w-full pl-9"
+            aria-label="Search templates"
+          />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-          {/* Preview */}
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography as="h2" variant="title-sm-semi-bold" color="primary">{template.name}</Typography>
-                <Typography as="p" variant="body-sm-regular" color="tertiary">{template.description}</Typography>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="tertiary" size="xs" onClick={copyHtml} start={<Icon as={copied ? Check : Copy}  />}>
-                  {copied ? "Copied" : "Copy"}
-                </Button>
-                <Button variant="tertiary" size="xs" onClick={downloadHtml} start={<Icon as={Download}  />}>
-                  Download
-                </Button>
-              </div>
-            </div>
-            <div className="overflow-hidden rounded-q-500 border border-q-border-subtle">
-              <iframe
-                srcDoc={preview.html}
-                title={template.name}
-                className="h-[500px] w-full bg-white"
-                sandbox="allow-same-origin"
-              />
-            </div>
-            <div className="flex gap-4 text-q-caption-xs-regular text-q-text-tertiary">
-              <span>HTML: {preview.html.length.toLocaleString()} chars</span>
-              <span>Text: {preview.text.length.toLocaleString()} chars</span>
-            </div>
+        {/* Category filter + template selector */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <Icon as={Filter} size="sm" className="text-q-text-tertiary shrink-0" />
+            <Button variant={!categoryFilter ? "primary" : "tertiary"} size="xs" onClick={() => setCategoryFilter("")}>All</Button>
+            {categories.map((c) => (
+              <Button key={c} variant={categoryFilter === c ? "primary" : "tertiary"} size="xs" onClick={() => setCategoryFilter(c === categoryFilter ? "" : c)}>
+                {c.charAt(0).toUpperCase() + c.slice(1)}
+              </Button>
+            ))}
           </div>
-
-          {/* Variables panel */}
-          <div className="flex flex-col gap-3 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-4">
-            <Typography as="h3" variant="label-sm-medium" color="primary">Template Variables</Typography>
-            {template.variables.length === 0 ? (
-              <Typography as="p" variant="body-sm-regular" color="tertiary">No variables for this template.</Typography>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {template.variables.map((v) => (
-                  <div key={v} className="flex flex-col gap-0.5">
-                    <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">{`{{${v}}}`}</Typography>
-                    <Input
-                      value={variables[v] ?? ""}
-                      onChange={(e) => setVariables((prev) => ({ ...prev, [v]: e.target.value }))}
-                      placeholder={v}
-                      
-                    />
-                  </div>
-                ))}
-              </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {filteredTemplates.map((t) => (
+              <Button
+                key={t.id}
+                variant={selectedTemplate === t.id ? "primary" : "tertiary"}
+                size="sm"
+                onClick={() => { setSelectedTemplate(t.id); setVariables({}); }}
+              >
+                {t.name}
+              </Button>
+            ))}
+            {filteredTemplates.length === 0 && (
+              <Typography as="span" variant="body-sm-regular" color="tertiary" className="py-2">
+                No templates matching your search
+              </Typography>
             )}
           </div>
         </div>
 
+        {filteredTemplates.length > 0 && (
+          <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+            {/* Preview */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Typography as="h2" variant="title-sm-semi-bold" color="primary">{template.name}</Typography>
+                  <Typography as="p" variant="body-sm-regular" color="tertiary">{template.description}</Typography>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="tertiary" size="xs" onClick={copyHtml} start={<Icon as={copied ? Check : Copy} size="sm" />}>
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
+                  <Button variant="tertiary" size="xs" onClick={downloadHtml} start={<Icon as={Download} size="sm" />}>
+                    Download
+                  </Button>
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-q-500 border border-q-border-subtle">
+                <iframe
+                  srcDoc={preview.html}
+                  title={template.name}
+                  className="h-[500px] w-full bg-white"
+                  sandbox="allow-same-origin"
+                />
+              </div>
+              <div className="flex gap-4 text-q-caption-xs-regular text-q-text-tertiary">
+                <span>HTML: {preview.html.length.toLocaleString()} chars</span>
+                <span>Text: {preview.text.length.toLocaleString()} chars</span>
+                <span>Category: {template.category}</span>
+              </div>
+            </div>
+
+            {/* Variables panel */}
+            <div className="flex flex-col gap-3 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-4">
+              <Typography as="h3" variant="label-sm-medium" color="primary">Template Variables</Typography>
+              {template.variables.length === 0 ? (
+                <Typography as="p" variant="body-sm-regular" color="tertiary">No variables for this template.</Typography>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {template.variables.map((v) => (
+                    <div key={v} className="flex flex-col gap-0.5">
+                      <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">{`{{${v}}}`}</Typography>
+                      <Input
+                        value={variables[v] ?? ""}
+                        onChange={(e) => setVariables((prev) => ({ ...prev, [v]: e.target.value }))}
+                        placeholder={v}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Plain text */}
-        <div className="flex flex-col gap-2">
-          <Typography as="h3" variant="label-sm-medium" color="primary">Plain Text</Typography>
-          <pre className="overflow-x-auto rounded-q-400 border border-q-border-subtle bg-q-background-secondary p-3 text-q-body-sm-regular text-q-text-secondary whitespace-pre-wrap font-mono text-sm">
-            {preview.text}
-          </pre>
-        </div>
+        {filteredTemplates.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <Typography as="h3" variant="label-sm-medium" color="primary">Plain Text</Typography>
+            <pre className="overflow-x-auto rounded-q-400 border border-q-border-subtle bg-q-background-secondary p-3 text-q-body-sm-regular text-q-text-secondary whitespace-pre-wrap font-mono text-sm">
+              {preview.text}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );

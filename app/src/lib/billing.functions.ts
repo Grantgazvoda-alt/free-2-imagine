@@ -870,7 +870,9 @@ export const getAuditLogFn = createServerFn({ method: "POST" })
   .validator(
     z.object({
       limit: z.number().int().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
       action: z.string().optional(),
+      search: z.string().optional(),
     }).optional(),
   )
   .handler(async ({ data }) => {
@@ -878,34 +880,108 @@ export const getAuditLogFn = createServerFn({ method: "POST" })
       const { requireCurrentUser } = await import("./auth.server");
       const auth = await requireCurrentUser();
       if (!auth.ok) {
-        return { ok: false as const, error: "unauthorized" as const, entries: [] };
+        return { ok: false as const, error: "unauthorized" as const, entries: [], total: 0 };
       }
 
       const { bindings } = await import("./bindings.server");
       const db = bindings().DB;
       if (!db) {
-        return { ok: false as const, error: "db_unavailable" as const, entries: [] };
+        return { ok: false as const, error: "db_unavailable" as const, entries: [], total: 0 };
       }
 
       const limit = data?.limit ?? 50;
-      let query = "SELECT * FROM audit_log WHERE actor_scope = ? ORDER BY created_at DESC LIMIT ?";
-      let params: any[] = [auth.user.id, limit];
+      const offset = data?.offset ?? 0;
+
+      let conditions = ["actor_scope = ?"];
+      let params: any[] = [auth.user.id];
 
       if (data?.action) {
-        query = "SELECT * FROM audit_log WHERE actor_scope = ? AND action = ? ORDER BY created_at DESC LIMIT ?";
-        params = [auth.user.id, data.action, limit];
+        conditions.push("action = ?");
+        params.push(data.action);
+      }
+      if (data?.search) {
+        conditions.push("(action LIKE ? OR details LIKE ? OR target_type LIKE ? OR target_id LIKE ?)");
+        const q = `%${data.search}%`;
+        params.push(q, q, q, q);
       }
 
+      const whereClause = conditions.join(" AND ");
+
+      // Get total count
+      const countResult = await db
+        .prepare(`SELECT COUNT(*) as total FROM audit_log WHERE ${whereClause}`)
+        .bind(...params)
+        .first<{ total: number }>();
+
+      const total = countResult?.total ?? 0;
+
+      // Get paginated entries
       const entries = await db
-        .prepare(query)
+        .prepare(`SELECT * FROM audit_log WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+        .bind(...params, limit, offset)
+        .all() as unknown as {
+        results: { id: number; actor_scope: string; action: string; target_type: string | null; target_id: string | null; details: string | null; created_at: string }[];
+      };
+
+      return { ok: true as const, entries: entries.results ?? [], total, limit, offset };
+    } catch (error) {
+      console.error("Get audit log error:", error);
+      return { ok: false as const, error: "internal_error" as const, entries: [], total: 0 };
+    }
+  });
+
+export const exportAuditLogCsvFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      action: z.string().optional(),
+      search: z.string().optional(),
+    }).optional(),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const };
+      }
+
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const };
+      }
+
+      let conditions = ["actor_scope = ?"];
+      let params: any[] = [auth.user.id];
+
+      if (data?.action) {
+        conditions.push("action = ?");
+        params.push(data.action);
+      }
+      if (data?.search) {
+        conditions.push("(action LIKE ? OR details LIKE ? OR target_type LIKE ? OR target_id LIKE ?)");
+        const q = `%${data.search}%`;
+        params.push(q, q, q, q);
+      }
+
+      const whereClause = conditions.join(" AND ");
+
+      const rows = await db
+        .prepare(`SELECT * FROM audit_log WHERE ${whereClause} ORDER BY created_at DESC LIMIT 10000`)
         .bind(...params)
         .all() as unknown as {
         results: { id: number; actor_scope: string; action: string; target_type: string | null; target_id: string | null; details: string | null; created_at: string }[];
       };
 
-      return { ok: true as const, entries: entries.results ?? [] };
+      const header = "id,action,target_type,target_id,details,created_at";
+      const csvRows = rows.results.map((r) =>
+        `"${r.id}","${r.action}","${r.target_type ?? ""}","${r.target_id ?? ""}","${(r.details ?? "").replace(/"/g, '""')}","${r.created_at}"`
+      );
+      const csv = [header, ...csvRows].join("\n");
+
+      return { ok: true as const, csv, count: rows.results.length };
     } catch (error) {
-      console.error("Get audit log error:", error);
-      return { ok: false as const, error: "internal_error" as const, entries: [] };
+      console.error("Export audit log error:", error);
+      return { ok: false as const, error: "internal_error" as const };
     }
   });
