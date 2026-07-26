@@ -706,6 +706,16 @@ export const updateUsageLimitsFn = createServerFn({ method: "POST" })
           .run();
       }
 
+      // Log to audit trail
+      const changes: string[] = [];
+      if (data.ownerLimit) changes.push(`owner=${data.ownerLimit}`);
+      if (data.adminLimit) changes.push(`admin=${data.adminLimit}`);
+      if (data.memberLimit) changes.push(`member=${data.memberLimit}`);
+      await db
+        .prepare("INSERT INTO audit_log (actor_scope, action, target_type, target_id, details) VALUES (?, ?, ?, ?, ?)")
+        .bind(auth.user.id, "update_usage_limits", "workspace", data.memberScope, changes.join(", "))
+        .run();
+
       return { ok: true as const };
     } catch (error) {
       console.error("Update usage limits error:", error);
@@ -783,11 +793,53 @@ export const exportUsageAndEmailFn = createServerFn({ method: "POST" })
         return { ok: false as const, error: "unauthorized" as const };
       }
 
-      // Get the export data
-      const { exportUsageFn } = await import("./billing.functions");
-      const exportResult = await exportUsageFn({ data: { format: data.format } });
-      if (!exportResult.ok) {
-        return { ok: false as const, error: "export_failed" as const };
+      // Get the export data directly
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const };
+      }
+
+      // Get team scopes
+      const teamMembers = await db
+        .prepare("SELECT member_scope FROM team_members WHERE team_owner_scope = ? AND status = 'active'")
+        .bind(auth.user.id)
+        .all() as unknown as { results: { member_scope: string }[] };
+
+      const scopes = [auth.user.id, ...teamMembers.results.map((m: any) => m.member_scope)];
+      const placeholders = scopes.map(() => "?").join(",");
+
+      const rows = await db
+        .prepare(
+          `SELECT ul.user_scope, ul.member_name, ul.model, ul.credits_consumed, ul.created_at
+           FROM usage_ledger ul
+           WHERE ul.user_scope IN (${placeholders})
+           ORDER BY ul.created_at DESC
+           LIMIT 10000`,
+        )
+        .bind(...scopes)
+        .all() as unknown as { results: any[] };
+
+      let exportData: string;
+      if (data.format === "csv") {
+        const header = "user_scope,member_name,model,credits_consumed,created_at";
+        const csvRows = rows.results.map((r: any) =>
+          `"${r.user_scope}","${r.member_name ?? "Unknown"}","${r.model}",${r.credits_consumed},"${r.created_at}"`,
+        );
+        exportData = [header, ...csvRows].join("
+");
+      } else {
+        exportData = JSON.stringify({
+          exportedAt: new Date().toISOString(),
+          totalRecords: rows.results.length,
+          usage: rows.results.map((r: any) => ({
+            userScope: r.user_scope,
+            memberName: r.member_name ?? "Unknown",
+            model: r.model,
+            credits: r.credits_consumed,
+            date: r.created_at,
+          })),
+        }, null, 2);
       }
 
       const filename = `orgasmo-usage-${new Date().toISOString().split("T")[0]}.${data.format}`;
@@ -812,5 +864,49 @@ export const exportUsageAndEmailFn = createServerFn({ method: "POST" })
     } catch (error) {
       console.error("Export and email error:", error);
       return { ok: false as const, error: "internal_error" as const };
+    }
+  });
+
+export const getAuditLogFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      limit: z.number().int().min(1).max(100).default(50),
+      action: z.string().optional(),
+    }).optional(),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const { requireCurrentUser } = await import("./auth.server");
+      const auth = await requireCurrentUser();
+      if (!auth.ok) {
+        return { ok: false as const, error: "unauthorized" as const, entries: [] };
+      }
+
+      const { bindings } = await import("./bindings.server");
+      const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const, entries: [] };
+      }
+
+      const limit = data?.limit ?? 50;
+      let query = "SELECT * FROM audit_log WHERE actor_scope = ? ORDER BY created_at DESC LIMIT ?";
+      let params: any[] = [auth.user.id, limit];
+
+      if (data?.action) {
+        query = "SELECT * FROM audit_log WHERE actor_scope = ? AND action = ? ORDER BY created_at DESC LIMIT ?";
+        params = [auth.user.id, data.action, limit];
+      }
+
+      const entries = await db
+        .prepare(query)
+        .bind(...params)
+        .all() as unknown as {
+        results: { id: number; actor_scope: string; action: string; target_type: string | null; target_id: string | null; details: string | null; created_at: string }[];
+      };
+
+      return { ok: true as const, entries: entries.results ?? [] };
+    } catch (error) {
+      console.error("Get audit log error:", error);
+      return { ok: false as const, error: "internal_error" as const, entries: [] };
     }
   });

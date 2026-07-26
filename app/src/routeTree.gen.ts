@@ -20,7 +20,9 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AdminAuditLogRouteImport } from './routes/admin/audit-log'
 import { Route as AdminEmailPreviewRouteImport } from './routes/admin/email-preview'
+import { Route as AdminEmailTemplatesRouteImport } from './routes/admin/email-templates'
 import { Route as AdminUsageLimitsRouteImport } from './routes/admin/usage-limits'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiUserRouteImport } from './routes/api/user'
@@ -82,9 +84,19 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAuditLogRoute = AdminAuditLogRouteImport.update({
+  id: '/admin/audit-log',
+  path: '/admin/audit-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminEmailPreviewRoute = AdminEmailPreviewRouteImport.update({
   id: '/admin/email-preview',
   path: '/admin/email-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEmailTemplatesRoute = AdminEmailTemplatesRouteImport.update({
+  id: '/admin/email-templates',
+  path: '/admin/email-templates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsageLimitsRoute = AdminUsageLimitsRouteImport.update({
@@ -125,7 +137,9 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesRoute
   '/admin/usage-limits': typeof AdminUsageLimitsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
@@ -144,7 +158,9 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesRoute
   '/admin/usage-limits': typeof AdminUsageLimitsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
@@ -164,7 +180,9 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/email-preview': typeof AdminEmailPreviewRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesRoute
   '/admin/usage-limits': typeof AdminUsageLimitsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/user': typeof ApiUserRoute
@@ -185,7 +203,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
+    | '/admin/audit-log'
     | '/admin/email-preview'
+    | '/admin/email-templates'
     | '/admin/usage-limits'
     | '/api/health'
     | '/api/user'
@@ -204,7 +224,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
+    | '/admin/audit-log'
     | '/admin/email-preview'
+    | '/admin/email-templates'
     | '/admin/usage-limits'
     | '/api/health'
     | '/api/user'
@@ -223,7 +245,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
+    | '/admin/audit-log'
     | '/admin/email-preview'
+    | '/admin/email-templates'
     | '/admin/usage-limits'
     | '/api/health'
     | '/api/user'
@@ -243,7 +267,9 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminEmailPreviewRoute: typeof AdminEmailPreviewRoute
+  AdminEmailTemplatesRoute: typeof AdminEmailTemplatesRoute
   AdminUsageLimitsRoute: typeof AdminUsageLimitsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiUserRoute: typeof ApiUserRoute
@@ -330,11 +356,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/audit-log': {
+      id: '/admin/audit-log'
+      path: '/admin/audit-log'
+      fullPath: '/admin/audit-log'
+      preLoaderRoute: typeof AdminAuditLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/email-preview': {
       id: '/admin/email-preview'
       path: '/admin/email-preview'
       fullPath: '/admin/email-preview'
       preLoaderRoute: typeof AdminEmailPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/email-templates': {
+      id: '/admin/email-templates'
+      path: '/admin/email-templates'
+      fullPath: '/admin/email-templates'
+      preLoaderRoute: typeof AdminEmailTemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/usage-limits': {
@@ -387,7 +427,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  AdminAuditLogRoute: AdminAuditLogRoute,
   AdminEmailPreviewRoute: AdminEmailPreviewRoute,
+  AdminEmailTemplatesRoute: AdminEmailTemplatesRoute,
   AdminUsageLimitsRoute: AdminUsageLimitsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiUserRoute: ApiUserRoute,
