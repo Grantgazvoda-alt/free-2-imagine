@@ -873,6 +873,8 @@ export const getAuditLogFn = createServerFn({ method: "POST" })
       offset: z.number().int().min(0).default(0),
       action: z.string().optional(),
       search: z.string().optional(),
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
     }).optional(),
   )
   .handler(async ({ data }) => {
@@ -903,6 +905,22 @@ export const getAuditLogFn = createServerFn({ method: "POST" })
         conditions.push("(action LIKE ? OR details LIKE ? OR target_type LIKE ? OR target_id LIKE ?)");
         const q = `%${data.search}%`;
         params.push(q, q, q, q);
+      }
+      if (data?.dateFrom) {
+        conditions.push("created_at >= ?");
+        params.push(data.dateFrom);
+      }
+      if (data?.dateTo) {
+        conditions.push("created_at <= ?");
+        params.push(data.dateTo + " 23:59:59");
+      }
+      if (data?.dateFrom) {
+        conditions.push("created_at >= ?");
+        params.push(data.dateFrom);
+      }
+      if (data?.dateTo) {
+        conditions.push("created_at <= ?");
+        params.push(data.dateTo + " 23:59:59");
       }
 
       const whereClause = conditions.join(" AND ");
@@ -935,6 +953,8 @@ export const exportAuditLogCsvFn = createServerFn({ method: "POST" })
     z.object({
       action: z.string().optional(),
       search: z.string().optional(),
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
     }).optional(),
   )
   .handler(async ({ data }) => {
@@ -962,6 +982,22 @@ export const exportAuditLogCsvFn = createServerFn({ method: "POST" })
         conditions.push("(action LIKE ? OR details LIKE ? OR target_type LIKE ? OR target_id LIKE ?)");
         const q = `%${data.search}%`;
         params.push(q, q, q, q);
+      }
+      if (data?.dateFrom) {
+        conditions.push("created_at >= ?");
+        params.push(data.dateFrom);
+      }
+      if (data?.dateTo) {
+        conditions.push("created_at <= ?");
+        params.push(data.dateTo + " 23:59:59");
+      }
+      if (data?.dateFrom) {
+        conditions.push("created_at >= ?");
+        params.push(data.dateFrom);
+      }
+      if (data?.dateTo) {
+        conditions.push("created_at <= ?");
+        params.push(data.dateTo + " 23:59:59");
       }
 
       const whereClause = conditions.join(" AND ");

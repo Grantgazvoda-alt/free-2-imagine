@@ -4,7 +4,7 @@ import { Typography } from "@higgsfield/quanta/typography";
 import { Button } from "@higgsfield/quanta/button";
 import { Input } from "@higgsfield/quanta/input";
 import { Icon } from "@higgsfield/quanta/icon";
-import { Mail, Eye, Copy, Check, Download, FileText, Search, Filter } from "lucide-react";
+import { Mail, Copy, Check, Download, Search, Filter, Trash2, Share2, Square, CheckSquare } from "lucide-react";
 import { renderInviteEmail, renderInviteText } from "@/lib/invite-email";
 
 export const Route = createFileRoute("/admin/email-templates")({
@@ -158,6 +158,49 @@ function EmailTemplatesPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  const toggleTemplateSelection = (id: string) => {
+    setSelectedTemplates((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedTemplates([]);
+    } else {
+      setSelectedTemplates(filteredTemplates.map((t) => t.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const bulkDownload = () => {
+    for (const id of selectedTemplates) {
+      const t = TEMPLATES.find((t) => t.id === id);
+      if (t) {
+        const preview = t.preview({});
+        const blob = new Blob([preview.html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${id}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+  };
+
+  const bulkCopy = async () => {
+    const htmls = selectedTemplates.map((id) => {
+      const t = TEMPLATES.find((t) => t.id === id);
+      return t ? `<!-- ${t.name} -->\n${t.preview({}).html}` : "";
+    }).join("\n\n---\n\n");
+    await navigator.clipboard.writeText(htmls);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const categories = [...new Set(TEMPLATES.map((t) => t.category))];
 
@@ -222,6 +265,22 @@ function EmailTemplatesPage() {
               </Button>
             ))}
           </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {filteredTemplates.map((t) => (
               <Button
@@ -239,6 +298,22 @@ function EmailTemplatesPage() {
               </Typography>
             )}
           </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
 
         {filteredTemplates.length > 0 && (
@@ -250,6 +325,22 @@ function EmailTemplatesPage() {
                   <Typography as="h2" variant="title-sm-semi-bold" color="primary">{template.name}</Typography>
                   <Typography as="p" variant="body-sm-regular" color="tertiary">{template.description}</Typography>
                 </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
                 <div className="flex gap-2">
                   <Button variant="tertiary" size="xs" onClick={copyHtml} start={<Icon as={copied ? Check : Copy} size="sm" />}>
                     {copied ? "Copied" : "Copy"}
@@ -258,7 +349,39 @@ function EmailTemplatesPage() {
                     Download
                   </Button>
                 </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
               </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
               <div className="overflow-hidden rounded-q-500 border border-q-border-subtle">
                 <iframe
                   srcDoc={preview.html}
@@ -267,12 +390,60 @@ function EmailTemplatesPage() {
                   sandbox="allow-same-origin"
                 />
               </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
               <div className="flex gap-4 text-q-caption-xs-regular text-q-text-tertiary">
                 <span>HTML: {preview.html.length.toLocaleString()} chars</span>
                 <span>Text: {preview.text.length.toLocaleString()} chars</span>
                 <span>Category: {template.category}</span>
               </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
             </div>
+          )}
+            </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
 
             {/* Variables panel */}
             <div className="flex flex-col gap-3 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-4">
@@ -290,11 +461,75 @@ function EmailTemplatesPage() {
                         placeholder={v}
                       />
                     </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
                   ))}
                 </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
               )}
             </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
           </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
         )}
 
         {/* Plain text */}
@@ -305,6 +540,22 @@ function EmailTemplatesPage() {
               {preview.text}
             </pre>
           </div>
+          {selectedTemplates.length > 0 && (
+            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
+              <Typography as="span" variant="body-sm-regular" color="primary">
+                {selectedTemplates.length} selected
+              </Typography>
+              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
+                Download All
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
+                {copied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
+                Clear
+              </Button>
+            </div>
+          )}
         )}
       </div>
     </div>
