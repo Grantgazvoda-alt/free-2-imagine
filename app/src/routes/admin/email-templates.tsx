@@ -461,20 +461,9 @@ function EmailTemplatesPage() {
                         placeholder={v}
                       />
                     </div>
-          {selectedTemplates.length > 0 && (
-            <div className="flex items-center gap-2 rounded-q-400 bg-q-brand-primary/10 px-3 py-2">
-              <Typography as="span" variant="body-sm-regular" color="primary">
-                {selectedTemplates.length} selected
-              </Typography>
-              <Button variant="tertiary" size="xs" onClick={bulkDownload} start={<Icon as={Download} size="sm" />}>
-                Download All
-              </Button>
-              <Button variant="tertiary" size="xs" onClick={bulkCopy} start={<Icon as={Copy} size="sm" />}>
-                {copied ? "Copied!" : "Copy All"}
-              </Button>
-              <Button variant="tertiary" size="xs" onClick={() => setSelectedTemplates([])} start={<Icon as={Trash2} size="sm" />}>
-                Clear
-              </Button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
                   ))}
