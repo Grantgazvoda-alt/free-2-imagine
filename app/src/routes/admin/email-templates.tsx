@@ -4,7 +4,7 @@ import { Typography } from "@higgsfield/quanta/typography";
 import { Button } from "@higgsfield/quanta/button";
 import { Input } from "@higgsfield/quanta/input";
 import { Icon } from "@higgsfield/quanta/icon";
-import { Mail, Eye, Copy, Check, Download, FileText } from "lucide-react";
+import { Mail, Copy, Check, Download, Square, CheckSquare } from "lucide-react";
 import { renderInviteEmail, renderInviteText } from "@/lib/invite-email";
 
 export const Route = createFileRoute("/admin/email-templates")({
@@ -116,6 +116,51 @@ function EmailTemplatesPage() {
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0].id);
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  const toggleSelection = (id: string) => {
+    setSelectedTemplates((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedTemplates([]);
+    } else {
+      setSelectedTemplates(filteredTemplates.map((t) => t.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const bulkDownload = () => {
+    for (const id of selectedTemplates) {
+      const t = TEMPLATES.find((t) => t.id === id);
+      if (t) {
+        const preview = t.preview({});
+        const blob = new Blob([preview.html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${id}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+  };
+
+  const bulkCopy = async () => {
+    const texts = selectedTemplates.map((id) => {
+      const t = TEMPLATES.find((t) => t.id === id);
+      return t ? `${t.name}: ${t.preview({}).html}` : "";
+    }).join("\n\n---\n\n");
+    await navigator.clipboard.writeText(texts);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const filteredTemplates = TEMPLATES;
 
   const template = TEMPLATES.find((t) => t.id === selectedTemplate) ?? TEMPLATES[0];
   const preview = template.preview(variables);
