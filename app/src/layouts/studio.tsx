@@ -6,6 +6,7 @@ import type { Generation } from "@higgsfield/fnf/client";
 import { getPreviewUrl } from "@higgsfield/fnf/client";
 import { trackGeneration, trackFeatureUse } from "@/lib/use-analytics";
 import { AvatarStylePickerModal, AVATAR_STYLE_DEFS, getStyleByValue } from "@/components/avatar-style-picker";
+import { HelpButton, HelpModal } from "@/components/in-app-help";
 import {
   costQueryOptions,
   flattenFeedPages,
@@ -661,6 +662,7 @@ export function StudioTemplate() {
   const [pickBestBatch, setPickBestBatch] = useState<Generation[]>([]);
   const [stylePickerOpen, setStylePickerOpen] = useState(false);
   const [customBatchCount, setCustomBatchCount] = useState(8);
+  const [helpOpen, setHelpOpen] = useState(false);
   const prependedIds = useRef(new Set<string>());
   const linkingIds = useRef(new Set<string>());
   const runProjectId = useRef<string | undefined>(undefined);
@@ -1172,6 +1174,8 @@ export function StudioTemplate() {
         customCount={customBatchCount}
         onCustomCountChange={setCustomBatchCount}
       />
+      <HelpButton onClick={() => setHelpOpen(true)} />
+      <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
       <StudioSidebar
         view={view}
         onViewChange={handleViewChange}

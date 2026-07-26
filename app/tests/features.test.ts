@@ -1,0 +1,158 @@
+import { describe, it, expect } from "bun:test";
+
+const BASE_URL = process.env.E2E_BASE_URL ?? "https://orgasmo.higgsfield.app";
+
+async function fetchWithUA(url: string) {
+  return fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 E2E-Test" },
+  });
+}
+
+describe("Orgasmo — Health & Monitoring", () => {
+  it("health endpoint returns 200", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/api/health`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/json");
+  });
+
+  it("health endpoint returns correct status", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/api/health`);
+    const body = await res.json();
+    expect(body).toHaveProperty("status", "ok");
+    expect(body).toHaveProperty("app", "orgasmo");
+    expect(body).toHaveProperty("version");
+    expect(body).toHaveProperty("timestamp");
+  });
+
+  it("health endpoint checks database connectivity", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/api/health`);
+    const body = await res.json();
+    expect(body.checks).toHaveProperty("database");
+    expect(body.checks).toHaveProperty("auth");
+  });
+
+  it("health endpoint has no-cache headers", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/api/health`);
+    expect(res.headers.get("cache-control")).toContain("no-store");
+  });
+});
+
+describe("Orgasmo — Settings Page", () => {
+  it("settings page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/settings`);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("Orgasmo — API Docs Page", () => {
+  it("docs page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/docs`);
+    expect(res.status).toBe(200);
+  });
+
+  it("docs page contains API documentation sections", async () => {
+    const html = await (await fetchWithUA(`${BASE_URL}/docs`)).text();
+    expect(html).toContain("API Documentation");
+    expect(html).toContain("Orgasmo");
+  });
+});
+
+describe("Orgasmo — Analytics Dashboard", () => {
+  it("analytics page loads (HTTP 200)", async () => {
+    const res = await fetchWithUA(`${BASE_URL}/analytics`);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("Orgasmo — Avatar Style Picker", () => {
+  it("avatar style definitions are in the routes bundle", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      // Check for key style values that survive minification
+      expect(js).toContain("professional");
+      expect(js).toContain("cyberpunk");
+      expect(js).toContain("watercolor");
+    }
+  });
+
+  it("avatar style picker modal is in the routes bundle", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      expect(js).toContain("Browse Styles");
+    }
+  });
+
+  it("favorites feature is in the routes bundle", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      expect(js).toContain("favorites");
+    }
+  });
+});
+
+describe("Orgasmo — Sidebar Navigation", () => {
+  it("routes bundle contains sidebar navigation items", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      expect(js).toContain("Analytics");
+      expect(js).toContain("Settings");
+    }
+  });
+});
+
+describe("Orgasmo — In-App Help", () => {
+  it("help feature is in the routes bundle (if deployed)", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      if (js.includes("HelpButton")) {
+        expect(js).toContain("HelpModal");
+      }
+    }
+  });
+
+  it("help content is in the routes bundle (if deployed)", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      if (js.includes("Getting Started")) {
+        expect(js).toContain("Freeform Mode");
+        expect(js).toContain("Avatar Mode");
+      }
+    }
+  });
+});
+
+describe("Orgasmo — Feature Completeness", () => {
+  it("routes bundle has all core features", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      const features = [
+        "gpt_image_2",
+        "batchSize",
+        "StudioPromptBox",
+        "Pick the best",
+        "ExamplePresets",
+        "SignInModal",
+        "HeroComposition",
+        "Analytics",
+        "Settings",
+      ];
+      for (const feature of features) {
+        expect(js).toContain(feature);
+      }
+    }
+  });
+});

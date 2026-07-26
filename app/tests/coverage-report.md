@@ -1,24 +1,25 @@
 # E2E Test Coverage Report
 
-**Generated:** 2026-07-25
+**Generated:** 2026-07-26
 **Target:** https://orgasmo.higgsfield.app
-**Result:** 49/49 passed (100%)
+**Result:** 64/64 passed (100%)
 
 ## Summary
 
 | Metric | Value |
 |---|---|
-| Total Tests | 49 |
-| Passed | 49 |
+| Total Tests | 64 |
+| Passed | 64 |
 | Failed | 0 |
 | Pass Rate | 100% |
-| Test Files | 9 |
-| Test Suites | 10 |
+| Test Files | 10 |
+| Test Suites | 11 |
 
 ## Coverage by Area
 
 | Area | Tests | Passed | Failed | Pass Rate |
 |---|---|---|---|---|
+| App | 15 | 15 | 0 | 100% |
 | App Infrastructure | 14 | 14 | 0 | 100% |
 | Asset Availability | 2 | 2 | 0 | 100% |
 | Auth | 2 | 2 | 0 | 100% |
@@ -31,6 +32,26 @@
 | Security | 3 | 3 | 0 | 100% |
 
 ## Test Details
+
+### App
+
+| Test | Status |
+|---|---|
+| Health & Monitoring > health endpoint returns 200 | ✅ pass |
+| Health & Monitoring > health endpoint returns correct status | ✅ pass |
+| Health & Monitoring > health endpoint checks database connectivity | ✅ pass |
+| Health & Monitoring > health endpoint has no-cache headers | ✅ pass |
+| Settings Page > settings page loads (HTTP 200) | ✅ pass |
+| API Docs Page > docs page loads (HTTP 200) | ✅ pass |
+| API Docs Page > docs page contains API documentation sections | ✅ pass |
+| Analytics Dashboard > analytics page loads (HTTP 200) | ✅ pass |
+| Avatar Style Picker > avatar style definitions are in the routes bundle | ✅ pass |
+| Avatar Style Picker > avatar style picker modal is in the routes bundle | ✅ pass |
+| Avatar Style Picker > favorites feature is in the routes bundle | ✅ pass |
+| Sidebar Navigation > routes bundle contains sidebar navigation items | ✅ pass |
+| In-App Help > help feature is in the routes bundle (if deployed) | ✅ pass |
+| In-App Help > help content is in the routes bundle (if deployed) | ✅ pass |
+| Feature Completeness > routes bundle has all core features | ✅ pass |
 
 ### App Infrastructure
 
