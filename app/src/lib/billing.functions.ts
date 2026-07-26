@@ -686,7 +686,6 @@ export const updateUsageLimitsFn = createServerFn({ method: "POST" })
         return { ok: false as const, error: "db_unavailable" as const };
       }
 
-      // Store custom limits in a metadata table or kv
       const { env } = await import("cloudflare:workers");
       const kv = (env as any).KV;
 
@@ -727,6 +726,9 @@ export const getUsageLimitsFn = createServerFn({ method: "POST" })
       const scope = data?.memberScope ?? auth.user.id;
       const { bindings } = await import("./bindings.server");
       const db = bindings().DB;
+      if (!db) {
+        return { ok: false as const, error: "db_unavailable" as const, limits: null };
+      }
       const { env } = await import("cloudflare:workers");
       const kv = (env as any).KV;
 
