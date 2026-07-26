@@ -5,7 +5,7 @@ import { toast } from "@higgsfield/quanta/sonner";
 import { Button } from "@higgsfield/quanta/button";
 import { Input } from "@higgsfield/quanta/input";
 import { Icon } from "@higgsfield/quanta/icon";
-import { Mail, Copy, Check, Download, Square, CheckSquare, Trash2, AlertTriangle } from "lucide-react";
+import { Mail, Copy, Check, Download, Square, CheckSquare, Trash2, AlertTriangle, Edit } from "lucide-react";
 import { renderInviteEmail, renderInviteText } from "@/lib/invite-email";
 
 export const Route = createFileRoute("/admin/email-templates")({

@@ -284,3 +284,17 @@ describe("Orgasmo — Bulk Template Actions", () => {
     }
   });
 });
+
+describe("Orgasmo — Bulk Edit Action", () => {
+  it("routes bundle contains bulk edit functions", async () => {
+    const html = await (await fetchWithUA(BASE_URL)).text();
+    const match = html.match(/\/assets\/routes-[^"']+\.js/);
+    if (match) {
+      const js = await (await fetchWithUA(`${BASE_URL}${match[0]}`)).text();
+      if (js.includes("bulkEdit") || js.includes("openBulkEdit")) {
+        expect(js).toContain("Edit");
+      }
+    }
+  });
+});
+

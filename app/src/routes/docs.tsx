@@ -497,6 +497,37 @@ function ApiDocs() {
 
         <div className="rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-6">
           <Typography as="h2" variant="title-md-semi-bold" color="primary" className="mb-3">
+            Bulk Actions API
+          </Typography>
+          <Typography as="p" variant="body-sm-regular" color="secondary">
+            The email templates page supports bulk operations on multiple templates.
+          </Typography>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">toggleSelectAll()</Typography>
+              <Typography as="span" variant="body-sm-regular" color="secondary">Select/deselect all visible templates</Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">bulkDownload()</Typography>
+              <Typography as="span" variant="body-sm-regular" color="secondary">Download each selected template as .html</Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">bulkCopy()</Typography>
+              <Typography as="span" variant="body-sm-regular" color="secondary">Copy all selected templates to clipboard</Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">openBulkEdit() / applyBulkEdit()</Typography>
+              <Typography as="span" variant="body-sm-regular" color="secondary">Set variables across all selected templates</Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Typography as="span" variant="caption-xs-regular" color="tertiary" className="font-mono">bulkDelete()</Typography>
+              <Typography as="span" variant="body-sm-regular" color="secondary">Remove selected templates with confirmation</Typography>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-6">
+          <Typography as="h2" variant="title-md-semi-bold" color="primary" className="mb-3">
             Database Schema (D1)
           </Typography>
           <div className="flex flex-col gap-4">

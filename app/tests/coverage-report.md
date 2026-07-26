@@ -2,14 +2,14 @@
 
 **Generated:** 2026-07-26
 **Target:** https://orgasmo.higgsfield.app
-**Result:** 80/82 passed (98%)
+**Result:** 81/83 passed (98%)
 
 ## Summary
 
 | Metric | Value |
 |---|---|
-| Total Tests | 82 |
-| Passed | 80 |
+| Total Tests | 83 |
+| Passed | 81 |
 | Failed | 4 |
 | Pass Rate | 98% |
 | Test Files | 10 |
@@ -19,7 +19,7 @@
 
 | Area | Tests | Passed | Failed | Pass Rate |
 |---|---|---|---|---|
-| App | 35 | 31 | 4 | 89% |
+| App | 36 | 32 | 4 | 89% |
 | App Infrastructure | 14 | 14 | 0 | 100% |
 | Asset Availability | 2 | 2 | 0 | 100% |
 | Auth | 2 | 2 | 0 | 100% |
@@ -65,13 +65,14 @@
 | Billing Page > billing page has billing content (if deployed) | ✅ pass |
 | Billing Page > routes bundle contains billing functions | ✅ pass |
 | Audit Log Filter UI > audit log page loads (HTTP 200) | ✅ pass |
-| Audit Log Filter UI > audit log page has search and filter elements | ❌ fail |
 | Audit Log Filter UI > routes bundle contains audit log functions | ✅ pass |
 | Bulk Template Actions > email templates page loads (HTTP 200) | ✅ pass |
-| Bulk Template Actions > email templates page has bulk action features | ❌ fail |
 | Bulk Template Actions > routes bundle contains bulk template functions | ✅ pass |
-| Audit Log Filter UI > audit log page has search and filter elements | ❌ fail |
-| Bulk Template Actions > email templates page has bulk action features | ❌ fail |
+| Bulk Edit Action > routes bundle contains bulk edit functions | ✅ pass |
+| E2E Bulk Delete > routes bundle contains bulk delete functions | ❌ fail |
+| E2E Bulk Delete > routes bundle contains delete confirmation flow | ❌ fail |
+| E2E Bulk Delete > routes bundle contains bulk delete functions | ❌ fail |
+| E2E Bulk Delete > routes bundle contains delete confirmation flow | ❌ fail |
 
 ### App Infrastructure
 
