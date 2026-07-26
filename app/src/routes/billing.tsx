@@ -9,7 +9,7 @@ import { Icon } from "@higgsfield/quanta/icon";
 import { toast } from "@higgsfield/quanta/sonner";
 import {
   CreditCard, Sparkles, BarChart3, ExternalLink, RefreshCw, Zap, Clock,
-  UserPlus, Download, FileText, FileSpreadsheet, Users, Shield,
+  UserPlus, Download, FileText, FileSpreadsheet, Users, Shield, Mail, Settings,
 } from "lucide-react";
 import { getUsageStatsFn, getBillingPortalUrlFn, inviteTeamMemberFn, removeTeamMemberFn, exportUsageFn, exportUsageAndEmailFn } from "@/lib/billing.functions";
 
