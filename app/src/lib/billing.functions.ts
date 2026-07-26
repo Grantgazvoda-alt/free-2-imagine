@@ -284,27 +284,19 @@ export const inviteTeamMemberFn = createServerFn({ method: "POST" })
         .bind(auth.user.id, data.memberScope, data.memberName, data.memberRole)
         .run();
 
-      // Send invite email
+      // Send invite email via real provider
       try {
-        const { renderInviteEmail, renderInviteText } = await import("./invite-email");
+        const { sendInviteEmail } = await import("./email.server");
         const inviteLink = `https://orgasmo.higgsfield.app/team?invite=${data.memberScope}`;
-        const html = renderInviteEmail({
-          inviterName: auth.user.id,
-          inviterEmail: auth.user.id,
-          teamName: "Orgasmo Team",
-          memberName: data.memberName,
-          role: data.memberRole,
-          inviteLink,
-          expiresIn: "7 days",
-        });
-        const text = renderInviteText({
+        const result = await sendInviteEmail({
+          toEmail: data.memberScope,
           inviterName: auth.user.id,
           teamName: "Orgasmo Team",
           memberName: data.memberName,
           role: data.memberRole,
           inviteLink,
         });
-        console.log(`[INVITE EMAIL] To: ${data.memberScope}`, { html: html.length, text: text.length });
+        console.log(`[INVITE] Email sent via ${result.provider}: ${result.ok}`);
       } catch (emailErr) {
         console.error("Failed to send invite email:", emailErr);
       }

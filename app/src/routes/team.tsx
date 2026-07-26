@@ -9,10 +9,10 @@ import { Icon } from "@higgsfield/quanta/icon";
 import { toast } from "@higgsfield/quanta/sonner";
 import {
   Users, UserPlus, UserMinus, Send, Check, X, RefreshCw,
-  ArrowRight, ArrowLeft, Clock, Shield, Zap,
+  ArrowRight, ArrowLeft, Clock, Shield, Zap, FileSpreadsheet, FileText,
 } from "lucide-react";
 import {
-  getTeamMembersFn, inviteTeamMemberFn, updateInviteStatusFn, getUsageStatsFn,
+  getTeamMembersFn, inviteTeamMemberFn, updateInviteStatusFn, getUsageStatsFn, exportUsageFn,
 } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/team")({
@@ -91,6 +91,24 @@ function TeamPage() {
     } catch {}
   };
 
+  const handleExport = async (format: "csv" | "json") => {
+    try {
+      const result = await exportUsageFn({ data: { format } });
+      if (result.ok) {
+        const mime = format === "csv" ? "text/csv" : "application/json";
+        const ext = format === "csv" ? "csv" : "json";
+        const blob = new Blob([result.data], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `orgasmo-team-usage-${new Date().toISOString().split("T")[0]}.${ext}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`Team usage exported as ${format.toUpperCase()}`);
+      }
+    } catch {}
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-q-background-primary">
@@ -117,6 +135,12 @@ function TeamPage() {
           <div className="flex items-center gap-2">
             <Button variant="tertiary" size="sm" onClick={() => refetch()} start={<Icon as={RefreshCw} size="sm" />}>
               Refresh
+            </Button>
+            <Button variant="tertiary" size="sm" onClick={() => handleExport("csv")} start={<Icon as={FileSpreadsheet} size="sm" />}>
+              Export CSV
+            </Button>
+            <Button variant="tertiary" size="sm" onClick={() => handleExport("json")} start={<Icon as={FileText} size="sm" />}>
+              Export JSON
             </Button>
             <Button variant="primary" size="sm" onClick={() => setInviteOpen(true)} start={<Icon as={UserPlus} size="sm" />}>
               Invite Member

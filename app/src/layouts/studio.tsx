@@ -5,7 +5,7 @@ import type { SubmitInputFor } from "@higgsfield/fnf/client";
 import type { Generation } from "@higgsfield/fnf/client";
 import { getPreviewUrl } from "@higgsfield/fnf/client";
 import { trackGeneration, trackFeatureUse } from "@/lib/use-analytics";
-import { checkUsageLimitFn } from "@/lib/billing.functions";
+import { checkUsageLimitFn, getUsageStatsFn } from "@/lib/billing.functions";
 import { AvatarStylePickerModal, AVATAR_STYLE_DEFS, getStyleByValue } from "@/components/avatar-style-picker";
 import { HelpButton, HelpModal } from "@/components/in-app-help";
 import {
@@ -946,6 +946,13 @@ export function StudioTemplate() {
     refetchOnWindowFocus: false,
   });
 
+  const usage = useQuery({
+    queryKey: ["studio", "usage", scopeKey],
+    queryFn: () => getUsageStatsFn(),
+    refetchOnWindowFocus: false,
+    staleTime: 30_000,
+  });
+
   useEffect(() => {
     const fresh =
       history.data == null
@@ -1137,6 +1144,25 @@ export function StudioTemplate() {
           if (!open) setPendingSignInUrl(null);
         }}
       />
+      {usage.data?.ok && usage.data.usage && (() => {
+        const u = usage.data.usage;
+        const pct = u.monthlyLimit > 0 ? Math.round((u.totalUsed / u.monthlyLimit) * 100) : 0;
+        if (pct < 70) return null;
+        const isExhausted = pct >= 100;
+        const color = isExhausted ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-amber-500/10 border-amber-500/30 text-amber-400";
+        return (
+          <div className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 border-b px-4 py-2.5 text-sm ${color}`}>
+            <span>
+              {isExhausted
+                ? `You've used all ${u.monthlyLimit} generations. `
+                : `You've used ${u.totalUsed}/${u.monthlyLimit} generations (${pct}%). `}
+            </span>
+            <a href="/pricing" className="underline font-medium hover:no-underline">
+              {isExhausted ? "Upgrade to continue generating" : "Upgrade for more"}
+            </a>
+          </div>
+        );
+      })()}
       <Modal.Root open={pickBestOpen} onOpenChange={(open) => {
         if (!open) setPickBestOpen(false);
       }}>
