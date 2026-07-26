@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Orgasmo — Business Strategy Document
 
 > **Confidential — Internal Strategy**
@@ -262,3 +263,98 @@ Orgasmo is successful when:
 ---
 
 *This document is a living strategy guide. It should be reviewed and updated monthly as the market evolves, new competitors emerge, and regulatory landscapes shift.*
+=======
+# Orgasmo — Business Strategy
+
+## Market Opportunity
+
+### The Gap
+Major AI image generators (Midjourney, DALL-E 3, Leonardo, Stable Diffusion) all enforce content moderation policies that restrict certain types of image generation. This creates a market gap for a platform that offers truly unrestricted generation while maintaining legal compliance.
+
+### Target Audience
+- **Digital artists** seeking creative freedom without arbitrary filters
+- **Content creators** needing bulk generation for social media
+- **Game developers** generating concept art and assets
+- **Writers and authors** visualizing characters and scenes
+- **Marketing professionals** creating custom visuals
+
+### Market Size
+The AI image generation market is projected to reach $5.5B by 2030. Even capturing 0.1% of this market represents $5.5M in annual revenue.
+
+## Differentiation
+
+| Feature | Orgasmo | Competitors |
+|---|---|---|
+| Content restrictions | None (legal compliance only) | Heavy moderation |
+| Model | GPT Image 2 | Various |
+| Bulk variations | Up to 36 | Typically 1-4 |
+| Avatar styles | 18 presets | Limited |
+| Reference photos | Yes | Varies |
+| Pricing | $0-$29.99/mo | $10-$60/mo |
+| Open source | No | Some |
+
+## Monetization Strategy
+
+### Three-Tier Model
+1. **Free ($0):** 10 generations — acquisition funnel, demonstrate value
+2. **Pro ($9.99/mo):** 100 generations — core revenue driver
+3. **Enterprise ($29.99/mo):** 500 generations — power users and teams
+
+### Revenue Projections
+- 1,000 Free users → 5% conversion = 50 Pro users = $500/mo
+- 10,000 Free users → 3% conversion = 300 Pro + 50 Enterprise = $4,500/mo
+- 100,000 Free users → 2% conversion = 2,000 Pro + 200 Enterprise = $26,000/mo
+
+### Unit Economics
+- GPT Image 2 cost per generation: ~$0.005 (varies by volume)
+- Pro plan (100 gens): $0.10 cost → $9.99 revenue = 99% margin
+- Enterprise (500 gens): $2.50 cost → $29.99 revenue = 90% margin
+
+## Risks
+
+### Payment Processor Compliance
+Unrestricted image generation may trigger Stripe's acceptable use policy review. Mitigation: clear ToS prohibiting illegal content, age verification, proactive compliance documentation.
+
+### Platform Dependency
+Orgasmo relies on Higgsfield for auth and generation infrastructure. Mitigation: monitor platform policy changes, maintain ability to switch providers.
+
+### Content Regulation
+AI regulation is evolving rapidly. Mitigation: legal counsel, compliance monitoring, proactive policy updates.
+
+### Competitive Response
+Major platforms may reduce restrictions. Mitigation: focus on UX, bulk features, avatar specialization, and community.
+
+## Roadmap
+
+### Q3 2026 (Current)
+- ✅ Core generation (GPT Image 2)
+- ✅ Avatar mode with 18 styles
+- ✅ Bulk generation
+- ✅ Analytics dashboard
+- ✅ Pricing page
+- ✅ Legal documents
+- 🔄 Stripe payment integration
+
+### Q4 2026
+- Stripe Checkout + subscriptions
+- Image-to-image workflows
+- Community feed and sharing
+- API access for developers
+- Team collaboration features
+
+### Q1 2027
+- Mobile app (React Native)
+- Custom model fine-tuning
+- Marketplace for style presets
+- Enterprise SSO and admin
+
+### Q2 2027
+- Video generation (Seedance)
+- Real-time collaboration
+- White-label API
+- Dedicated infrastructure for enterprise
+
+## Long-Term Vision
+
+Orgasmo aims to be the premier creative AI platform for unrestricted visual generation. By focusing on quality, speed, and creative freedom, we differentiate from mainstream platforms that prioritize safety over expression. The long-term goal is a self-sustaining creative ecosystem where users generate, share, and remix AI content in a community-driven marketplace.
+>>>>>>> f3459fc (Add pricing page, legal documents, strategy document, sidebar navigation)
