@@ -826,8 +826,7 @@ export const exportUsageAndEmailFn = createServerFn({ method: "POST" })
         const csvRows = rows.results.map((r: any) =>
           `"${r.user_scope}","${r.member_name ?? "Unknown"}","${r.model}",${r.credits_consumed},"${r.created_at}"`,
         );
-        exportData = [header, ...csvRows].join("
-");
+        exportData = [header, ...csvRows].join("\n");
       } else {
         exportData = JSON.stringify({
           exportedAt: new Date().toISOString(),
