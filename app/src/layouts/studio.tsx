@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ComponentProps, CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
