@@ -45,6 +45,7 @@ import { ExamplePresets } from "@/components/example-presets";
 import type { GalleryItem } from "@/components/gallery";
 import { HeroComposition } from "@/components/hero-composition";
 import { IconTile } from "@/components/icon-tile";
+import { useNavigate } from "@tanstack/react-router";
 import { MyProjects } from "@/components/my-projects";
 import type { MyProjectsProject } from "@/components/my-projects";
 import { ProjectActions } from "@/components/project-actions";
@@ -309,31 +310,31 @@ function StudioSidebar({
             />
             <Sidebar.Item
               selected={false}
-              onClick={() => { window.location.href = "/analytics"; }}
+              onClick={() => { navigate({ to: "/analytics" }); }}
               start={<Icon as={IconAnalytics} size="md" className="text-q-icon-secondary" />}
               title="Analytics"
             />
             <Sidebar.Item
               selected={false}
-              onClick={() => { window.location.href = "/settings"; }}
+              onClick={() => { navigate({ to: "/settings" }); }}
               start={<Icon as={IconSettings} size="md" className="text-q-icon-secondary" />}
               title="Settings"
             />
             <Sidebar.Item
               selected={false}
-              onClick={() => { window.location.href = "/pricing"; }}
+              onClick={() => { navigate({ to: "/pricing" }); }}
               start={<Icon as={IconPricing} size="md" className="text-q-icon-secondary" />}
               title="Pricing"
             />
             <Sidebar.Item
               selected={false}
-              onClick={() => { window.location.href = "/billing"; }}
+              onClick={() => { navigate({ to: "/billing" }); }}
               start={<Icon as={IconBilling} size="md" className="text-q-icon-secondary" />}
               title="Billing"
             />
             <Sidebar.Item
               selected={false}
-              onClick={() => { window.location.href = "/team"; }}
+              onClick={() => { navigate({ to: "/team" }); }}
               start={<Icon as={IconTeam} size="md" className="text-q-icon-secondary" />}
               title="Team"
             />
@@ -683,6 +684,7 @@ export function StudioTemplate() {
   }
   const [view, setView] = useState<StudioView>({ kind: "home" });
   const [prompt, setPrompt] = useState("");
+  const navigate = useNavigate();
   const [mode, setMode] = useState("freeform");
   const [settingValues, setSettingValues] = useState<Record<string, string>>({
     aspectRatio: "1:1",

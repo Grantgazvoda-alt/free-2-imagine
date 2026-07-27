@@ -15,6 +15,8 @@
     "postinstall": "node scripts/verify-install.mjs",
     "check:adapted": "node scripts/check-adaptation.mjs",
     "test": "bun test tests/*.test.ts",
+    "check:bundle-size": "node scripts/check-bundle-size.mjs",
+    "test:ci": "bun test tests/*.test.ts && node scripts/check-bundle-size.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsr generate && tsc --noEmit"
