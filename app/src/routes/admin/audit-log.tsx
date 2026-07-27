@@ -14,7 +14,7 @@ import { getAuditLogFn, exportAuditLogCsvFn } from "@/lib/billing.functions";
 import { toast } from "@higgsfield/quanta/sonner";
 
 export const Route = createFileRoute("/admin/audit-log")({
-  component: lazyRouteComponent(() => import("./audit-log-page"), "default"),
+  component: lazyRouteComponent(() => import("./audit-log-page")),
   head: () => ({
     meta: [
       { title: "Audit Log — Orgasmo Admin" },

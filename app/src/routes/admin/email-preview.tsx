@@ -5,7 +5,7 @@ import { Eye, Mail, ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin/email-preview")({
-  component: lazyRouteComponent(() => import("./email-preview-page"), "default"),
+  component: lazyRouteComponent(() => import("./email-preview-page")),
   head: () => ({
     meta: [
       { title: "Email Preview — Orgasmo Admin" },

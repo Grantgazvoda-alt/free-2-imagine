@@ -11,7 +11,7 @@ import { getUsageLimitsFn, updateUsageLimitsFn } from "@/lib/billing.functions";
 import { toast } from "@higgsfield/quanta/sonner";
 
 export const Route = createFileRoute("/admin/usage-limits")({
-  component: lazyRouteComponent(() => import("./usage-limits-page"), "default"),
+  component: lazyRouteComponent(() => import("./usage-limits-page")),
   head: () => ({
     meta: [
       { title: "Usage Limits — Orgasmo Admin" },

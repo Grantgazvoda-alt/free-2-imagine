@@ -1,7 +1,7 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/privacy")({
-  component: lazyRouteComponent(() => import("./privacy-page"), "default"),
+  component: lazyRouteComponent(() => import("./privacy-page")),
   head: () => ({
     meta: [
       { title: "Privacy Policy — Orgasmo" },

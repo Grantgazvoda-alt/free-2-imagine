@@ -8,7 +8,7 @@ import { User, CreditCard, Palette, LogOut, ExternalLink, Shield } from "lucide-
 import { fetchCurrentUser } from "@/lib/fnf.browser";
 
 export const Route = createFileRoute("/settings")({
-  component: lazyRouteComponent(() => import("./settings-page"), "default"),
+  component: lazyRouteComponent(() => import("./settings-page")),
   head: () => ({
     meta: [
       { title: "Settings — Orgasmo" },

@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Copy,
   Check,
+  BarChart,
 } from "lucide-react";
 
 

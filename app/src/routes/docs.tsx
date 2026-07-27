@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/docs")({
-  component: lazyRouteComponent(() => import("./docs-page"), "default"),
+  component: lazyRouteComponent(() => import("./docs-page")),
   head: () => ({
     meta: [
       { title: "API Docs — Orgasmo" },

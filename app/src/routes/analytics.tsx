@@ -8,7 +8,7 @@ import { BarChart3, Eye, Sparkles, Globe, Activity } from "lucide-react";
 import { getAnalyticsSummaryFn } from "@/lib/analytics.functions";
 
 export const Route = createFileRoute("/analytics")({
-  component: lazyRouteComponent(() => import("./analytics-page"), "default"),
+  component: lazyRouteComponent(() => import("./analytics-page")),
   head: () => ({
     meta: [
       { title: "Analytics — Orgasmo" },
