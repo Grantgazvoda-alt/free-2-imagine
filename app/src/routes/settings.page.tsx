@@ -6,7 +6,31 @@ import { Icon } from "@higgsfield/quanta/icon";
 import { User, CreditCard, Palette, LogOut, ExternalLink, Shield } from "lucide-react";
 import { fetchCurrentUser } from "@/lib/fnf.browser";
 
-export default function SettingsPage() {
+function SettingsSection({
+  icon,
+  title,
+  children,
+}: {
+  icon: typeof User;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-5">
+      <div className="flex items-center gap-3">
+        <div className="flex size-9 items-center justify-center rounded-q-300 bg-q-brand-primary/10">
+          <Icon as={icon} size="md" className="text-q-brand-primary" />
+        </div>
+        <Typography as="h2" variant="title-md-semi-bold" color="primary">
+          {title}
+        </Typography>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SettingsPage() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["current-user"],
     queryFn: fetchCurrentUser,
