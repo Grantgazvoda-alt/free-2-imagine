@@ -975,7 +975,7 @@ export function StudioTemplate() {
     const fresh =
       history.data == null
         ? []
-        : run.generations.filter((generation) => !prependedIds.current.has(generation.id));
+        : run.generations.filter((generation: any) => !prependedIds.current.has(generation.id));
     if (fresh.length > 0) {
       for (const generation of fresh) prependedIds.current.add(generation.id);
       prependGenerations(queryClient, HISTORY_QUERY, fresh, { scopeKey });
@@ -1014,8 +1014,8 @@ export function StudioTemplate() {
 
   useEffect(() => {
     if (pickBestBatch.length <= 1) return;
-    const allTerminal = pickBestBatch.every((gen) => {
-      const live = run.generations.find((g) => g.id === gen.id);
+    const allTerminal = pickBestBatch.every((gen: any) => {
+      const live = run.generations.find((g: any) => g.id === gen.id);
       return live && (live.status === "completed" || live.status === "failed");
     });
     if (allTerminal && !pickBestOpen) {
@@ -1096,7 +1096,7 @@ export function StudioTemplate() {
     navigateToAllOnSubmitRef.current = runProjectId.current == null;
     const variations = parseInt(settingValues.variations ?? "1", 10);
     trackGeneration("gpt_image_2", variations);
-    void run.start(input).then((generations) => {
+    void run.start(input).then((generations: any) => {
       if (generations.length === 0) navigateToAllOnSubmitRef.current = false;
       if (variations > 1 && generations.length > 1) {
         setPickBestBatch(generations);
@@ -1190,8 +1190,8 @@ export function StudioTemplate() {
             <Modal.CloseButton />
           </Modal.Header>
           <div className="grid grid-cols-2 gap-4 p-4">
-            {pickBestBatch.map((generation) => {
-              const live = run.generations.find((g) => g.id === generation.id);
+            {pickBestBatch.map((generation: any) => {
+              const live = run.generations.find((g: any) => g.id === generation.id);
               const previewUrl = live ? getPreviewUrl(live) : null;
               const failed = live?.status === "failed";
               return (
