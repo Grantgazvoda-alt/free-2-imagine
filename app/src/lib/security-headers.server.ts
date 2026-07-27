@@ -22,6 +22,11 @@ export function applySecurityHeaders(response: Response): Response {
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   headers.set("X-XSS-Protection", "0");
+  // Prevent the browser from caching the HTML page. The JS/CSS bundles are
+  // already content-hashed by Vite (cacheable indefinitely). Only the HTML
+  // needs to be fresh on every request — a stale HTML page references old
+  // bundle hashes that no longer exist after a deploy, causing 404 errors.
+  headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
