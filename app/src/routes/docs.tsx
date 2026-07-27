@@ -1,14 +1,10 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
-import { useState } from "react";
-import { Typography } from "@higgsfield/quanta/typography";
-import { Icon } from "@higgsfield/quanta/icon";
-import {
-  Terminal, Code, Database, Shield, AlertTriangle,
-  ChevronDown, ChevronRight, Copy, Check,
-} from "lucide-react";
+
+const DocsPage = lazyRouteComponent(() => import("./docs-page"));
 
 export const Route = createFileRoute("/docs")({
-  component: lazyRouteComponent(() => import("./docs-page")),
+  component: DocsPage,
+  preload: () => DocsPage.preload?.(),
   head: () => ({
     meta: [
       { title: "API Docs — Orgasmo" },

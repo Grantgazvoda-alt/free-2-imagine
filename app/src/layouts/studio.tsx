@@ -45,7 +45,7 @@ import { ExamplePresets } from "@/components/example-presets";
 import type { GalleryItem } from "@/components/gallery";
 import { HeroComposition } from "@/components/hero-composition";
 import { IconTile } from "@/components/icon-tile";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { MyProjects } from "@/components/my-projects";
 import type { MyProjectsProject } from "@/components/my-projects";
 import { ProjectActions } from "@/components/project-actions";
@@ -1178,9 +1178,9 @@ export function StudioTemplate() {
                 ? `You've used all ${u.monthlyLimit} generations. `
                 : `You've used ${u.totalUsed}/${u.monthlyLimit} generations (${pct}%). `}
             </span>
-            <a href="/pricing" className="underline font-medium hover:no-underline">
+            <Link to="/pricing" preload="intent" className="underline font-medium hover:no-underline">
               {isExhausted ? "Upgrade to continue generating" : "Upgrade for more"}
-            </a>
+            </Link>
           </div>
         );
       })()}
