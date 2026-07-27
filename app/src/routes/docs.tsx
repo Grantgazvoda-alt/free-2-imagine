@@ -1,10 +1,8 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
-const DocsPage = lazyRouteComponent(() => import("./docs-page"));
-
 export const Route = createFileRoute("/docs")({
-  component: DocsPage,
-  preload: () => DocsPage.preload?.(),
+  preload: true,
+  component: lazyRouteComponent(() => import("./docs-page")),
   head: () => ({
     meta: [
       { title: "API Docs — Orgasmo" },

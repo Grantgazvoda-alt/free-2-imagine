@@ -1,11 +1,8 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
-const BillingPage = lazyRouteComponent(() => import("./billing-page"));
-
 export const Route = createFileRoute("/billing")({
-  component: BillingPage,
-  // Preload billing when the app renders (it's a core feature route)
-  preload: () => BillingPage.preload?.(),
+  preload: true,
+  component: lazyRouteComponent(() => import("./billing-page")),
   head: () => ({
     meta: [
       { title: "Billing — Orgasmo" },

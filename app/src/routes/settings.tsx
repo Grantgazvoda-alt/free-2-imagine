@@ -1,10 +1,8 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
-const SettingsPage = lazyRouteComponent(() => import("./settings-page"));
-
 export const Route = createFileRoute("/settings")({
-  component: SettingsPage,
-  preload: () => SettingsPage.preload?.(),
+  preload: true,
+  component: lazyRouteComponent(() => import("./settings-page")),
   head: () => ({
     meta: [
       { title: "Settings — Orgasmo" },

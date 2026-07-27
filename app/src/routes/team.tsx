@@ -1,10 +1,8 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
-const TeamPage = lazyRouteComponent(() => import("./team-page"));
-
 export const Route = createFileRoute("/team")({
-  component: TeamPage,
-  preload: () => TeamPage.preload?.(),
+  preload: true,
+  component: lazyRouteComponent(() => import("./team-page")),
   head: () => ({
     meta: [
       { title: "Team Management — Orgasmo" },

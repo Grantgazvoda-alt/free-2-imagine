@@ -1,10 +1,8 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
-const AnalyticsPage = lazyRouteComponent(() => import("./analytics-page"));
-
 export const Route = createFileRoute("/analytics")({
-  component: AnalyticsPage,
-  preload: () => AnalyticsPage.preload?.(),
+  preload: true,
+  component: lazyRouteComponent(() => import("./analytics-page")),
   head: () => ({
     meta: [
       { title: "Analytics — Orgasmo" },
