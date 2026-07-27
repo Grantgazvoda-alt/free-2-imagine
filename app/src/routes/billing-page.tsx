@@ -11,6 +11,43 @@ import {
   UserPlus, Download, FileText, FileSpreadsheet, Users, Shield, Mail, Settings,
 } from "lucide-react";
 import { getUsageStatsFn, getBillingPortalUrlFn, inviteTeamMemberFn, removeTeamMemberFn, exportUsageFn, exportUsageAndEmailFn } from "@/lib/billing.functions";
+
+function StatCard({ icon, label, value, subtitle, color }: {
+  icon: typeof CreditCard; label: string; value: string | number; subtitle?: string; color: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-q-500 border border-q-border-subtle bg-q-background-secondary p-5">
+      <div className={`flex size-12 shrink-0 items-center justify-center rounded-q-400 ${color}`}>
+        <Icon as={icon} size="lg" className="text-white" />
+      </div>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <Typography as="span" variant="body-sm-regular" color="tertiary">{label}</Typography>
+        <Typography as="span" variant="display-md-bold" color="primary">{value}</Typography>
+        {subtitle && <Typography as="span" variant="caption-xs-regular" color="tertiary">{subtitle}</Typography>}
+      </div>
+    </div>
+  );
+}
+
+function UsageBar({ used, total, color }: { used: number; total: number; color?: string }) {
+  const pct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+  const barColor = color ?? (pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-q-brand-primary");
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <Typography as="span" variant="caption-sm-regular" color="tertiary">{used} used</Typography>
+        <Typography as="span" variant="caption-sm-regular" color="tertiary">{total} total</Typography>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-q-background-tertiary">
+        <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+      <Typography as="span" variant="caption-xs-regular" color={pct >= 90 ? "danger" : "tertiary"}>
+        {pct}% of limit
+      </Typography>
+    </div>
+  );
+}
+
 export default function BillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);

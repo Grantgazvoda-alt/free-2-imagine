@@ -1,7 +1,7 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/pricing")({
-  component: lazyRouteComponent(() => import("./pricing.page"), "default"),
+  component: lazyRouteComponent(() => import("./pricing-page"), "default"),
   head: () => ({
     meta: [
       { title: "Pricing — Orgasmo" },

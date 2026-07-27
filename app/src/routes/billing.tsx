@@ -14,7 +14,7 @@ import {
 import { getUsageStatsFn, getBillingPortalUrlFn, inviteTeamMemberFn, removeTeamMemberFn, exportUsageFn, exportUsageAndEmailFn } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/billing")({
-  component: lazyRouteComponent(() => import("./billing.page"), "default"),
+  component: lazyRouteComponent(() => import("./billing-page"), "default"),
   head: () => ({
     meta: [
       { title: "Billing — Orgasmo" },

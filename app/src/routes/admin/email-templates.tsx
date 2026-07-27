@@ -9,7 +9,7 @@ import { Mail, Copy, Check, Download, Square, CheckSquare, Trash2, AlertTriangle
 import { renderInviteEmail, renderInviteText } from "@/lib/invite-email";
 
 export const Route = createFileRoute("/admin/email-templates")({
-  component: lazyRouteComponent(() => import("./email-templates.page"), "default"),
+  component: lazyRouteComponent(() => import("./email-templates-page"), "default"),
   head: () => ({
     meta: [
       { title: "Email Templates — Orgasmo Admin" },

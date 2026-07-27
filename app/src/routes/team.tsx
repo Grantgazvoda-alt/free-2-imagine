@@ -16,7 +16,7 @@ import {
 } from "@/lib/billing.functions";
 
 export const Route = createFileRoute("/team")({
-  component: lazyRouteComponent(() => import("./team.page"), "default"),
+  component: lazyRouteComponent(() => import("./team-page"), "default"),
   head: () => ({
     meta: [
       { title: "Team Management — Orgasmo" },
