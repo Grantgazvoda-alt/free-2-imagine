@@ -16,6 +16,7 @@ import appCss from "../styles.css?url";
 import { appMeta, toOwnAssetUrl, type AppMeta } from "../lib/app-meta";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { usePageViewTracking } from "../lib/use-analytics";
+import { initWebVitals } from "../lib/web-vitals";
 import {
   fnfBrowserAdapter,
   getFnfScopeKey,
@@ -162,6 +163,8 @@ function RootComponent() {
   usePageViewTracking();
 
   useEffect(() => {
+    // Initialize real user monitoring (Web Vitals)
+    initWebVitals();
     if (!__HF_DESIGN_INSPECTOR__) {
       return;
     }

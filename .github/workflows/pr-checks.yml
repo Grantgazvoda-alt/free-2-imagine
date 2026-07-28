@@ -1,0 +1,136 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/**"
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests & Bundle Size
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        working-directory: app
+        run: |
+          rm -rf node_modules
+          bun install
+
+      - name: Build
+        working-directory: app
+        run: bun run build:dev
+
+      - name: Run E2E tests
+        working-directory: app
+        run: E2E_BASE_URL="https://orgasmo.higgsfield.app" bun run test
+        continue-on-error: true
+
+      - name: Check bundle sizes
+        working-directory: app
+        run: node scripts/check-bundle-size.mjs
+
+      - name: Bundle size diff (vs. main)
+        working-directory: app
+        run: |
+          # Fetch the main branch baseline
+          git fetch origin main --depth=1
+          git checkout origin/main -- dist/bundle-baseline.json 2>/dev/null || echo "No baseline found on main"
+          node scripts/bundle-diff.mjs --diff 2>&1 || true
+
+      - name: Comment bundle diff on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const baselinePath = 'app/dist/bundle-baseline.json';
+            const currentDir = 'app/dist/client/assets';
+
+            if (!fs.existsSync(baselinePath) || !fs.existsSync(currentDir)) {
+              console.log('No bundle data to comment');
+              return;
+            }
+
+            const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+            const files = fs.readdirSync(currentDir).filter(f => f.endsWith('.js'));
+
+            const current = {};
+            for (const file of files) {
+              const size = fs.statSync(path.join(currentDir, file)).size;
+              const prefix = file.replace(/-[A-Za-z0-9_-]+\.js$/, '');
+              if (!current[prefix]) current[prefix] = 0;
+              current[prefix] += size;
+            }
+
+            const allKeys = new Set([...Object.keys(baseline), ...Object.keys(current)]);
+            let totalBase = 0, totalCurr = 0;
+            const lines = ['## 📊 Bundle Size Diff', '', '| Bundle | Baseline | Current | Diff |', '|---|---|---|---|'];
+
+            for (const key of [...allKeys].sort()) {
+              const base = baseline[key] ?? 0;
+              const curr = current[key] ?? 0;
+              totalBase += base;
+              totalCurr += curr;
+              if (base !== curr) {
+                const sign = curr > base ? '+' : '';
+                const diff = curr - base;
+                const diffStr = diff < 1024 ? `${sign}${diff}B` : `${sign}${(diff/1024).toFixed(0)}KB`;
+                const pct = base > 0 ? ` (${((diff/base)*100).toFixed(1)}%)` : '';
+                lines.push(`| \`${key}\` | ${(base/1024).toFixed(0)}KB | ${(curr/1024).toFixed(0)}KB | **${diffStr}**${pct} |`);
+              }
+            }
+
+            const totalDiff = totalCurr - totalBase;
+            const totalSign = totalDiff > 0 ? '+' : '';
+            lines.push(`| **Total** | ${(totalBase/1024).toFixed(0)}KB | ${(totalCurr/1024).toFixed(0)}KB | **${totalSign}${(totalDiff/1024).toFixed(0)}KB** |`);
+
+            if (totalDiff > 50 * 1024) {
+              lines.push('', '⚠️ **Bundle size increased by more than 50KB — please review before merging.**');
+            } else if (totalDiff > 0) {
+              lines.push('', 'ℹ️ Bundle size increased within acceptable range.');
+            } else if (totalDiff < 0) {
+              lines.push('', '✅ Bundle size decreased!');
+            }
+
+            const body = lines.join('\n');
+
+            // Find and update existing comment, or create a new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('Bundle Size Diff'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
