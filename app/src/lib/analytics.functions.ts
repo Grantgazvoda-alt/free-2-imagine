@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const trackEventSchema = z.object({
-  eventType: z.enum(["page_view", "feature_use", "generation"]),
+  eventType: z.enum(["page_view", "feature_use", "generation", "performance"]),
   eventName: z.string().min(1).max(128),
   pagePath: z.string().optional(),
   sessionId: z.string().optional(),
