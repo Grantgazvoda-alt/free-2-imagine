@@ -1,11 +1,10 @@
-# Orgasmo — AI Image Studio
-
-![E2E Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Grantgazvoda-alt/gummybeargummy/main/coverage-badge.json)
-![CI](https://img.shields.io/github/actions/workflow/status/Grantgazvoda-alt/gummybeargummy/.github/workflows/e2e-coverage.yml?branch=main&label=CI)
-
-Generate any image, no rules. A full-stack AI image generation app built on the Higgsfield platform, using GPT Image 2 for unrestricted image creation.
+# Free 2 Imagine (Orgasmo) — AI Image Studio
 
 **Live at:** https://orgasmo.higgsfield.app
+**GitHub:** https://github.com/Grantgazvoda-alt/free-2-imagine
+**Full repo map:** [ABOUT.md](./ABOUT.md) — includes every function, feature, tool, test, and improvement roadmap
+
+Generate any image, no rules. A full-stack AI image generation app built on the Higgsfield platform, using GPT Image 2 for unrestricted image creation.
 
 ---
 
