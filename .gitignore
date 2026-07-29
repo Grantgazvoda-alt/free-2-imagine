@@ -2,3 +2,4 @@ node_modules
 extracted_assets/
 extracted_assets_final/
 extracted_assets_exact/
+.github/
