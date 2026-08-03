@@ -1,7 +1,20 @@
 import { createProfileClient, type FnfAdapter } from "@higgsfield/fnf";
 import type { MediaRef } from "@higgsfield/fnf/media";
 import { errorFromJSON } from "@higgsfield/fnf/errors";
-import { gptImage2 } from "@higgsfield/fnf/jobs";
+import {
+  gptImage2,
+  grokImagine,
+  grokImagineV15,
+  happyHorse,
+  kling3_0,
+  nanoBanana2,
+  nanoBananaFlash,
+  recraftV41Image,
+  seedance2_0,
+  seedreamV4_5,
+  veo3_1Lite,
+  wan27,
+} from "@higgsfield/fnf/jobs";
 import type { AssetSelection } from "@/components/asset-library";
 import {
   cancelJobFn,
@@ -21,7 +34,28 @@ import {
 import type { FnfRpcResult } from "./fnf.functions";
 import { requestGenerationApproval } from "./generation-approval";
 
-export const STUDIO_JOBS = [gptImage2] as const;
+/**
+ * Models with executable, typed FNF definitions in this repository.
+ *
+ * Registration makes them available to the FNF client and cost/validation
+ * pipeline. Product UI must still expose only model-specific controls that
+ * match each definition. Civitai checkpoints and LoRAs are intentionally not
+ * listed here because discovery/download support is not an inference runtime.
+ */
+export const STUDIO_JOBS = [
+  gptImage2,
+  nanoBanana2,
+  nanoBananaFlash,
+  seedreamV4_5,
+  recraftV41Image,
+  seedance2_0,
+  happyHorse,
+  kling3_0,
+  veo3_1Lite,
+  wan27,
+  grokImagine,
+  grokImagineV15,
+] as const;
 
 async function unwrap(result: FnfRpcResult): Promise<unknown> {
   if (!result.ok) throw errorFromJSON(result.error);
